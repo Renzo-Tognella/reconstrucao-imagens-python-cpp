@@ -79,45 +79,67 @@ Testes (os de conformidade rodam contra os dois servidores):
 ctest --test-dir build
 ```
 
-## Demonstração: servidor, monitor e três clientes
+## Como ligar e executar
 
-Cada parte roda num terminal.
+A demonstração usa 5 terminais: um para o servidor, um para o monitor e um para cada cliente. Antes, faça a [instalação](#instalação) uma vez. Em cada terminal, entre na pasta do projeto.
 
-1. Gerar a carga. Ela é sorteada uma vez e salva, para os dois servidores receberem a mesma sequência:
+1. Terminal 1, gerar a carga. Ela é sorteada uma vez e salva, para os dois servidores receberem a mesma sequência:
 
    ```bash
    .venv/bin/python -m cliente.manifesto --semente 42 --clientes 3 --sinais-por-cliente 15 --modelos 30x30 --saida resultados/demo/carga.json
    ```
 
-2. Terminal 1, servidor Python:
+2. Terminal 1, ligar o servidor Python:
 
    ```bash
    .venv/bin/python -m recon_py.servidor --porta 8000 --dados dados --saida resultados/demo/servidor-python --workers 6 --aquecer 30x30
    ```
 
-   ou servidor C++:
+   ou o servidor C++:
 
    ```bash
    build/servidor_cpp --porta 8000 --dados dados --saida resultados/demo/servidor-cpp --workers 6 --aquecer 30x30
    ```
 
-3. Terminal 2, monitor. Abra <http://127.0.0.1:8050>:
+   Com `--aquecer`, o servidor carrega a matriz antes de abrir a porta. Quando a porta abre, ele já aceita pedidos.
+
+3. Terminal 2, ligar o monitor e abrir <http://127.0.0.1:8050> no navegador:
 
    ```bash
    .venv/bin/python -m monitor --servidor http://127.0.0.1:8000
    ```
 
-4. Terminais 3, 4 e 5, um cliente em cada, iniciados em momentos diferentes (troque `--cliente 1` por 2 e 3):
+4. Terminais 3, 4 e 5, um cliente em cada, iniciados com alguns segundos de diferença (troque `--cliente 1` por 2 e 3):
 
    ```bash
    .venv/bin/python -m cliente.instancia --carga resultados/demo/carga.json --cliente 1 --servidor http://127.0.0.1:8000
    ```
 
-Cada cliente aplica o ganho, envia os sinais com intervalos aleatórios, consulta o servidor até as imagens ficarem prontas e grava um relatório HTML com as imagens e os dados de cada uma.
+5. Acompanhar no monitor. Ele mostra fila, tarefas em execução, CPU, memória, imagens por segundo e uma faixa por cliente com a espera na fila e a reconstrução de cada pedido.
 
-O monitor mostra fila, tarefas em execução, CPU, memória, imagens por segundo e uma faixa por cliente com a espera na fila e a reconstrução de cada pedido. O botão **Nova rodada** zera a tela.
+Cada cliente aplica o ganho, envia os sinais com intervalos aleatórios, consulta o servidor até as imagens ficarem prontas e grava um relatório HTML com as imagens e os dados de cada uma. O cliente encerra sozinho depois da última imagem.
 
-Opções de `cliente.manifesto`:
+### Trocar de servidor
+
+1. No terminal 1, pare o servidor com `Ctrl+C`.
+2. Ligue o outro servidor (passo 2).
+3. No monitor, clique em **Nova rodada** para zerar a tela.
+4. Rode os três clientes de novo (passo 4), com a mesma `carga.json`.
+
+### Desligar
+
+Pare o servidor (terminal 1) e o monitor (terminal 2) com `Ctrl+C`.
+
+### Problemas comuns
+
+| Problema | Solução |
+| --- | --- |
+| Porta 8000 ocupada | Use `--porta 8001` no servidor e `http://127.0.0.1:8001` no monitor e nos clientes |
+| `build/servidor_cpp` não existe | `cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j2` |
+| Pasta `dados/` não existe | `.venv/bin/python preparar_dados.py` |
+| `.venv/` não existe | `uv sync` |
+
+### Opções da carga (`cliente.manifesto`)
 
 | Opção | Valores |
 | --- | --- |
@@ -126,8 +148,6 @@ Opções de `cliente.manifesto`:
 | `--ganho` | `sorteado` (padrão), `sim` ou `nao` |
 | `--intervalo-max` | espera máxima entre envios, em segundos (padrão 5) |
 | `--semente` | mesma semente, mesma carga |
-
-Para trocar de servidor, pare o terminal 1 com `Ctrl+C`, suba o outro e rode os clientes de novo com a mesma carga. Se a porta 8000 estiver ocupada, use `--porta 8001` nos três lugares.
 
 ## API
 
