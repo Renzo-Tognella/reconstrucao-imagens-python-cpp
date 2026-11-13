@@ -73,7 +73,8 @@ def test_envia_so_os_pedidos_do_cliente(dados, subir_stub, tmp_path):
     caminho = gravar(nova_carga(dados), tmp_path)
     resultado, _ = rodar(caminho, 3, stub.url, dados, tmp_path / "c3")
     recebidos = [p["parametros"]["job_id"] for p in stub.estado.posts_recebidos]
-    assert recebidos == ["c003-s0001", "c003-s0002", "c003-s0003"]
+    assert [r.rsplit("-", 1)[0] for r in recebidos] == ["c003-s0001", "c003-s0002", "c003-s0003"]
+    assert all(re.fullmatch(r"c003-s000\d-\d{6}", r) for r in recebidos)
     assert {p["parametros"]["client_id"] for p in stub.estado.posts_recebidos} == {"cliente-003"}
     assert resultado["resumo"]["concluidos"] == 3
 
@@ -180,6 +181,13 @@ def test_resumo_mostra_contagens_e_tempos():
     assert "Com falha" not in texto
 
 
+def test_conflito_de_id_aparece_como_id_ja_usado():
+    linha = linha_envio(PEDIDO, {"t_envio_wall": INSTANTE, "efetivo_s": 1.5, "status_http": 409,
+                                 "duracao_post_s": 0.002, "desfecho": "erro_http", "erro": "job_conflict"},
+                        "2/3", SEM_COR)
+    assert "id já usado (409)" in linha
+
+
 def test_cor_so_quando_ligada():
     registro = {"t_envio_wall": INSTANTE, "efetivo_s": 1.5, "status_http": 202, "duracao_post_s": 0.01,
                 "desfecho": "aceito", "erro": None}
@@ -202,6 +210,19 @@ def test_deteccao_de_cor():
 
 
 # Fluxo completo com o stub
+
+def test_mesma_carga_duas_vezes_no_mesmo_servidor_reconstroi_de_novo(dados, subir_stub, tmp_path):
+    stub = subir_stub(duracao_s=0.05)
+    caminho = gravar(nova_carga(dados), tmp_path)
+    primeira, _ = rodar(caminho, 1, stub.url, dados, tmp_path / "r1", carimbo="100000")
+    segunda, texto = rodar(caminho, 1, stub.url, dados, tmp_path / "r2", carimbo="100001")
+    for resultado in (primeira, segunda):
+        assert resultado["resumo"]["aceitos"] == 3 and resultado["resumo"]["concluidos"] == 3
+    assert all(e["status_http"] == 202 for e in envios(tmp_path / "r2"))
+    assert "já recebido" not in texto and "409" not in texto
+    ids = [p["parametros"]["job_id"] for p in stub.estado.posts_recebidos]
+    assert len(ids) == 6 and len(set(ids)) == 6
+
 
 def test_terminal_relatorio_e_registros_com_stub(dados, subir_stub, tmp_path):
     stub = subir_stub(duracao_s=0.1)

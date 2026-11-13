@@ -34,11 +34,11 @@ def linha_evento(evento: str, job_id: str, corpo: dict | None, fila: int, rodand
                  instante: float | None = None) -> str:
     hora = time.strftime("%H:%M:%S", time.localtime(instante if instante is not None else time.time()))
     rotulo = ROTULOS.get(evento, evento)
-    return f"{hora}  {rotulo:<9}  {job_id:<12}  {_detalhe(evento, corpo or {}):<48}  fila {fila}, rodando {rodando}"
+    return f"{hora}  {rotulo:<9}  {job_id:<17}  {_detalhe(evento, corpo or {}):<48}  fila {fila}, rodando {rodando}"
 
 
 def cabecalho() -> str:
-    return f"{'hora':<8}  {'evento':<9}  {'pedido':<12}  {'detalhe':<48}  estado do servidor"
+    return f"{'hora':<8}  {'evento':<9}  {'pedido':<17}  {'detalhe':<48}  estado do servidor"
 
 
 def escrever(linha: str, fluxo: TextIO | None = None) -> None:

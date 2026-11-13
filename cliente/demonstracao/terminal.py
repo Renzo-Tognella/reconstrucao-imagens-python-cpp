@@ -78,6 +78,8 @@ def _resposta(registro: dict) -> tuple[str, tuple[str, ...]]:
         return "já recebido (200)", ("verde",)
     if status == 503:
         return "fila cheia (503)", ("vermelho",)
+    if status == 409:
+        return "id já usado (409)", ("vermelho",)
     return f"{registro['erro'] or 'recusado'} ({status})", ("vermelho",)
 
 

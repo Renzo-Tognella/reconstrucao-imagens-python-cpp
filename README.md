@@ -121,6 +121,8 @@ A demonstração usa 5 terminais: um para o servidor, um para o monitor e um par
 
 Cada cliente aplica o ganho, envia os sinais com intervalos aleatórios, consulta o servidor até as imagens ficarem prontas e grava um relatório HTML com as imagens e os dados de cada uma. O cliente encerra sozinho depois da última imagem.
 
+Cada execução do cliente acrescenta a hora de início ao `job_id` (por exemplo `c001-s0001-160750`). Assim dá para rodar a mesma carga de novo no mesmo servidor ligado: os pedidos são novos e não caem em `200` (já recebido) nem em `409` (id já usado).
+
 ### Trocar de servidor
 
 1. No terminal 1, pare o servidor com `Ctrl+C`.
@@ -189,3 +191,51 @@ Medição num Apple M3 com 8 GiB, na bateria, com uma thread por chamada BLAS e 
 - Na agenda do enunciado, o tempo total (cerca de 35,3 s) depende da duração da agenda e não diferencia as versões.
 - A fila recusou pedidos só acima de 16 vezes a carga do enunciado, sem falhas.
 - No 60×60, a matriz de 1,4 GiB não coube na memória livre. As tarefas variaram de 0,3 s a 59 s e não permitem ordenar as versões.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Gerar carga
+
+### 30x30
+.venv/bin/python -m cliente.manifesto --semente 42 --clientes 3 --sinais-por-cliente 15 --modelos 30x30 --saida resultados/demo/carga.json
+
+### 60x60
+.venv/bin/python -m cliente.manifesto --semente 7 --clientes 1 --sinais-por-cliente 3 --modelos 60x60 --saida resultados/demo/teste-60.json
+
+
+
+
+
+ # Entrar nos clintes 30x30
+
+.venv/bin/python -m cliente.instancia --carga resultados/demo/carga.json --cliente 1 --servidor http://127.0.0.1:8000
+
+.venv/bin/python -m cliente.instancia --carga resultados/demo/carga.json --cliente 2 --servidor http://127.0.0.1:8000
+
+.venv/bin/python -m cliente.instancia --carga resultados/demo/carga.json --cliente 3 --servidor http://127.0.0.1:8000
+
+ # Entrar nos clintes 60x60
+
+.venv/bin/python -m cliente.instancia --carga resultados/demo/teste-60.json --cliente 1 --servidor http://127.0.0.1:8000
+
+.venv/bin/python -m cliente.instancia --carga resultados/demo/teste-60.json --cliente 2 --servidor http://127.0.0.1:8000
+
+
+.venv/bin/python -m cliente.instancia --carga resultados/demo/teste-60.json --cliente 3 --servidor http://127.0.0.1:8000

@@ -93,13 +93,13 @@ std::string hora_local() {
 
 std::string linha_evento(const char* evento, const std::string& job_id, const Tarefa* tarefa,
                          std::size_t fila, std::size_t rodando) {
-    return hora_local() + "  " + completar(rotulo(evento), 9) + "  " + completar(job_id, 12) + "  " +
+    return hora_local() + "  " + completar(rotulo(evento), 9) + "  " + completar(job_id, 17) + "  " +
            completar(detalhe(evento, tarefa), 48) + "  fila " + std::to_string(fila) + ", rodando " +
            std::to_string(rodando);
 }
 
 std::string cabecalho() {
-    return completar("hora", 8) + "  " + completar("evento", 9) + "  " + completar("pedido", 12) + "  " +
+    return completar("hora", 8) + "  " + completar("evento", 9) + "  " + completar("pedido", 17) + "  " +
            completar("detalhe", 48) + "  estado do servidor";
 }
 

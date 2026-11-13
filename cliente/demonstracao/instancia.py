@@ -49,6 +49,15 @@ def pedidos_do_cliente(carga: dict, numero: int) -> dict:
     return {**carga, "pedidos": pedidos}
 
 
+def com_ids_da_execucao(carga: dict, carimbo: str) -> dict:
+    """Acrescenta o carimbo da execução a cada job_id.
+
+    O servidor guarda as tarefas enquanto está ligado. Sem o carimbo, rodar a mesma carga de novo cairia em
+    "já recebido" (200, nenhuma reconstrução nova) ou, se outra carga usou o mesmo id, em job_conflict (409).
+    """
+    return {**carga, "pedidos": [{**p, "job_id": f"{p['job_id']}-{carimbo}"} for p in carga["pedidos"]]}
+
+
 def consultar_info(url: str) -> dict:
     try:
         resposta = httpx.get(f"{url}/info", timeout=5.0, trust_env=False, headers={"Connection": "close"})
@@ -59,8 +68,9 @@ def consultar_info(url: str) -> dict:
     return resposta.json()
 
 
-def pasta_padrao(carga: Path, implementacao: str, cliente: str) -> Path:
-    return PASTA_DEMO / carga.stem / implementacao / cliente / time.strftime("%Y%m%d-%H%M%S")
+def pasta_padrao(carga: Path, implementacao: str, cliente: str, momento: time.struct_time | None = None) -> Path:
+    data_hora = time.strftime("%Y%m%d-%H%M%S", momento or time.localtime())
+    return PASTA_DEMO / carga.stem / implementacao / cliente / data_hora
 
 
 def _gravar_execucao(saida: Path, registro: dict) -> None:
@@ -118,13 +128,15 @@ def _cabecalho(cliente: str, propria: dict, info: dict, url: str, saida: Path, i
 
 def executar_instancia(carga_caminho: Path, numero: int, url: str = URL_PADRAO, *, saida: Path | None = None,
                        dados: Path = DADOS_PADRAO, intervalo_consulta_s: float = 1.0, limite_s: float = 600.0,
-                       terminal: TextIO = sys.stdout, cor: bool = False) -> dict:
+                       terminal: TextIO = sys.stdout, cor: bool = False, carimbo: str | None = None) -> dict:
     url = url.rstrip("/")
     cliente = id_cliente(numero)
-    propria = pedidos_do_cliente(ler_json(carga_caminho), numero)
+    momento = time.localtime()
+    propria = com_ids_da_execucao(pedidos_do_cliente(ler_json(carga_caminho), numero),
+                                  carimbo or time.strftime("%H%M%S", momento))
     info = consultar_info(url)
     _conferir_modelos(propria, info)
-    saida = saida or pasta_padrao(carga_caminho, info.get("implementation", "servidor"), cliente)
+    saida = saida or pasta_padrao(carga_caminho, info.get("implementation", "servidor"), cliente, momento)
     _preparar_saida(saida, propria)
     registro = _registro_inicial(cliente, url, info, carga_caminho, propria)
     _gravar_execucao(saida, registro)
