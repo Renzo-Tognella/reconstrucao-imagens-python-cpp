@@ -1,3 +1,4 @@
+import csv
 import io
 import json
 import os
@@ -163,11 +164,11 @@ def test_resumo_mostra_contagens_e_tempos():
     resumo = {"pedidos": 3, "nao_enviados": 0, "concluidos": 2, "rejeitados": 1, "erros_http": 0, "falhas": 0,
               "sem_conclusao": 0, "erros_download": 0, "erros_transporte": 0, "t0_wall": 100.0, "fim_wall": 104.25}
     jobs = [{"queue_wait_s": 0.1, "duration_s": 0.5}, {"queue_wait_s": 0.3, "duration_s": 0.7}]
-    linhas = linhas_resumo("cliente-001", resumo, jobs, Path("/x/relatorio_cliente.html"), SEM_COR)
+    linhas = linhas_resumo("cliente-001", resumo, jobs, Path("/x/relatorio_cliente.csv"), SEM_COR)
     texto = "\n".join(linhas)
     assert "RESUMO DO CLIENTE 1" in texto
     assert re.search(r"Imagens prontas\s+2 de 3", texto) and re.search(r"Recusadas pelo servidor\s+1", texto)
-    for trecho in ("4,25 s", "0,800 s (0,200 s na fila + 0,600 s reconstruindo)", "/x/relatorio_cliente.html"):
+    for trecho in ("4,25 s", "0,800 s (0,200 s na fila + 0,600 s reconstruindo)", "/x/relatorio_cliente.csv"):
         assert trecho in texto
     assert "Com falha" not in texto
 
@@ -225,13 +226,15 @@ def test_terminal_relatorio_e_registros_com_stub(dados, subir_stub, tmp_path):
     assert max(i for i, l in enumerate(linhas) if "aceito (202)" in l) < linhas.index("IMAGENS")
     assert "Os 3 envios terminaram" in texto
     assert re.search(r"Imagens prontas\s+3 de 3", texto) and not ANSI.search(texto)
-    html = (saida / "relatorio_cliente.html").read_text(encoding="utf-8")
-    assert html.count('src="data:image/png;base64,') == 3 and "cliente-001" in html and "c002-" not in html
+    with (saida / "relatorio_cliente.csv").open(encoding="utf-8", newline="") as arquivo:
+        linhas_csv = list(csv.DictReader(arquivo))
+    assert len(linhas_csv) == 3 and {l["cliente"] for l in linhas_csv} == {"cliente-001"}
+    assert all(l["situacao"] == "concluída" and (saida / l["imagem"]).exists() for l in linhas_csv)
     carga_propria = json.loads((saida / "carga.json").read_text())
     assert {p["client_id"] for p in carga_propria["pedidos"]} == {"cliente-001"}
     registro = json.loads((saida / "execucao.json").read_text())
     assert registro["implementacao"] == "python" and registro["cliente"] == "cliente-001"
-    assert resultado["relatorio"] == saida / "relatorio_cliente.html"
+    assert resultado["relatorio"] == saida / "relatorio_cliente.csv"
 
 
 def test_recusa_pasta_de_saida_ja_usada(dados, subir_stub, tmp_path):
@@ -305,8 +308,8 @@ def test_tres_terminais_com_servidor_python_real(tmp_path):
         for numero, (cliente, texto) in enumerate(zip(clientes, saidas), start=1):
             assert cliente.returncode == 0, texto
             assert re.search(r"Imagens prontas\s+3 de 3", texto) and len(linhas_de_imagem(texto)) == 3
-            html = (tmp_path / f"c{numero}" / "relatorio_cliente.html").read_text(encoding="utf-8")
-            assert html.count('src="data:image/png;base64,') == 3
+            relatorio = (tmp_path / f"c{numero}" / "relatorio_cliente.csv").read_text(encoding="utf-8")
+            assert relatorio.count("concluída") == 3
             registro = json.loads((tmp_path / f"c{numero}" / "execucao.json").read_text())
             assert registro["implementacao"] == "python"
         (tmp_path / "saida_terminais.txt").write_text("\n".join(saidas))

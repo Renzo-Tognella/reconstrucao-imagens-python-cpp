@@ -37,7 +37,7 @@ api/ ou http/     uma rota por arquivo em rotas/
 etapas/           etapas 2 e 3 do enunciado, que rodam fora do servidor
 ```
 
-No cliente, as pastas seguem o fluxo de um pedido: `carga/` sorteia os pedidos e aplica o ganho, `envio/` manda os sinais, consulta o servidor e baixa as imagens, `relatorios/` monta o HTML com as imagens e os dados de cada uma, e `demonstracao/` roda um cliente por terminal. O monitor lê o servidor por fora e calcula CPU, memória e fila em `monitor/medicao/`.
+No cliente, as pastas seguem o fluxo de um pedido: `carga/` sorteia os pedidos e aplica o ganho, `envio/` manda os sinais, consulta o servidor e baixa as imagens, `relatorios/` grava o CSV com os dados de cada imagem, e `demonstracao/` roda um cliente por terminal. O monitor lê o servidor por fora e calcula CPU, memória e fila em `monitor/medicao/`.
 
 ## Instalação
 
@@ -121,7 +121,7 @@ A demonstração usa 5 terminais: um para o servidor, um para o monitor e um par
 
 5. Acompanhar no monitor. Ele mostra fila, tarefas em execução, CPU, memória, imagens por segundo e uma faixa por cliente com a espera na fila e a reconstrução de cada pedido.
 
-Cada cliente aplica o ganho, envia os sinais com intervalos aleatórios, consulta o servidor até as imagens ficarem prontas e grava um relatório HTML com as imagens e os dados de cada uma. O cliente encerra sozinho depois da última imagem.
+Cada cliente aplica o ganho, envia os sinais com intervalos aleatórios, consulta o servidor até as imagens ficarem prontas e grava `relatorio_cliente.csv` com uma linha por imagem; os PNG ficam em `cliente/jobs/`. O cliente encerra sozinho depois da última imagem.
 
 Cada execução do cliente acrescenta a hora de início ao `job_id` (por exemplo `c001-s0001-160750`). Assim dá para rodar a mesma carga de novo no mesmo servidor ligado: os pedidos são novos e não caem em `200` (já recebido) nem em `409` (id já usado).
 
@@ -194,94 +194,148 @@ Medição num Apple M3 com 8 GiB, na bateria, com uma thread por chamada BLAS e 
 - A fila recusou pedidos só acima de 16 vezes a carga do enunciado, sem falhas.
 - No 60×60, a matriz de 1,4 GiB não coube na memória livre. As tarefas variaram de 0,3 s a 59 s e não permitem ordenar as versões.
 
-## Roteiro de avaliação
+## Comandos, quando usar e o que atende
 
-Cada comando roda na raiz do projeto, num terminal próprio.
+Todos rodam na raiz do projeto. Servidor, monitor e cada cliente ficam em terminais separados.
 
-1. Operações básicas (etapa 2).
+### 1. Preparar (só na primeira vez, ou depois de apagar `dados/` ou `build/`)
 
-   ```bash
-   build/operacoes_check
-   ```
+```bash
+uv sync
+```
 
-   ```bash
-   .venv/bin/python -m pytest -q tests/python/etapas/test_operacoes_basicas.py
-   ```
+```bash
+.venv/bin/python preparar_dados.py
+```
 
-   Atende: validar MN, aM e Ma com a biblioteca antes de integrar cliente e servidor.
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j2
+```
 
-2. Protótipo (etapa 3).
+### 2. Testes (antes da apresentação)
 
-   ```bash
-   build/prototipo_cpp --dados dados --modelo 30x30 --sinal dados/sinais/30x30/g1.f64 --algoritmo cgnr --repeticoes 3
-   ```
+```bash
+.venv/bin/python -m pytest -q
+```
 
-   ```bash
-   .venv/bin/python -m recon_py.prototipo --dados dados --modelo 30x30 --sinal dados/sinais/30x30/g1.f64 --algoritmo cgnr --repeticoes 3
-   ```
+```bash
+ctest --test-dir build
+```
 
-   Atende: protótipo CGNR medindo tempo, memória e CPU.
+### 3. Etapas 2 e 3 (começo da apresentação)
 
-3. Carga.
+```bash
+build/operacoes_check
+```
 
-   ```bash
-   .venv/bin/python -m cliente.manifesto --semente 42 --clientes 3 --sinais-por-cliente 15 --saida resultados/demo/carga-completa.json
-   ```
+```bash
+.venv/bin/python -m pytest -q tests/python/etapas/test_operacoes_basicas.py
+```
 
-   Atende: 3 clientes, 15 sinais por cliente, ganho e modelo sorteados, mesma sequência para as duas versões. Para só um modelo, use `--modelos 30x30` ou `--modelos 60x60`.
+```bash
+build/prototipo_cpp --dados dados --modelo 30x30 --sinal dados/sinais/30x30/g1.f64 --algoritmo cgnr --repeticoes 3
+```
 
-4. Servidor Python e monitor (<http://127.0.0.1:8050>).
+```bash
+.venv/bin/python -m recon_py.prototipo --dados dados --modelo 30x30 --sinal dados/sinais/30x30/g1.f64 --algoritmo cgnr --repeticoes 3
+```
 
-   ```bash
-   .venv/bin/python -m recon_py.servidor --porta 8000 --dados dados --saida resultados/demo/servidor-python --workers 6 --aquecer 30x30,60x60
-   ```
+### 4. Gerar a carga (uma vez; a mesma carga vale para os dois servidores)
 
-   ```bash
-   .venv/bin/python -m monitor --servidor http://127.0.0.1:8000
-   ```
+Os dois modelos sorteados, para a demonstração completa:
 
-   Atende: versão interpretada e não fortemente tipada; pedidos enfileirados e iniciados conforme workers e memória; CPU, memória e fila durante a execução.
+```bash
+.venv/bin/python -m cliente.manifesto --semente 42 --clientes 3 --sinais-por-cliente 15 --saida resultados/demo/carga-completa.json
+```
 
-5. Três clientes, um por terminal.
+Só 30×30, quando o tempo for curto ou faltar memória para o 60×60:
 
-   ```bash
-   .venv/bin/python -m cliente.instancia --carga resultados/demo/carga-completa.json --cliente 1 --servidor http://127.0.0.1:8000
-   ```
+```bash
+.venv/bin/python -m cliente.manifesto --semente 42 --clientes 3 --sinais-por-cliente 15 --modelos 30x30 --saida resultados/demo/carga.json
+```
 
-   ```bash
-   .venv/bin/python -m cliente.instancia --carga resultados/demo/carga-completa.json --cliente 2 --servidor http://127.0.0.1:8000
-   ```
+Só 60×60, poucos sinais, para mostrar o modelo maior:
 
-   ```bash
-   .venv/bin/python -m cliente.instancia --carga resultados/demo/carga-completa.json --cliente 3 --servidor http://127.0.0.1:8000
-   ```
+```bash
+.venv/bin/python -m cliente.manifesto --semente 7 --clientes 3 --sinais-por-cliente 3 --modelos 60x60 --saida resultados/demo/teste-60.json
+```
 
-   Atende: clientes simultâneos, sinais em intervalos aleatórios, ganho aplicado no cliente, reconstrução até ε < 1e-4 ou 10 iterações.
+### 5. Ligar um servidor (um de cada vez, na porta 8000)
 
-6. Relatório do cliente.
+`--aquecer` carrega antes as matrizes que a carga vai usar: `30x30`, `60x60` ou `30x30,60x60`.
 
-   ```bash
-   open resultados/demo/carga-completa/python/cliente-001/*/relatorio_cliente.html
-   ```
+```bash
+.venv/bin/python -m recon_py.servidor --porta 8000 --dados dados --saida resultados/demo/servidor-python --workers 6 --aquecer 30x30,60x60
+```
 
-   Atende: relatório com todas as imagens e, em cada uma, cliente, sinal, algoritmo, início, fim e iterações.
+```bash
+build/servidor_cpp --porta 8000 --dados dados --saida resultados/demo/servidor-cpp --workers 6 --aquecer 30x30,60x60
+```
 
-7. Servidor C++ com a mesma carga: pare o servidor Python, ligue o C++, clique em **Nova rodada** no monitor e repita o passo 5.
+Para trocar: `Ctrl+C` no servidor ligado e suba o outro.
 
-   ```bash
-   build/servidor_cpp --porta 8000 --dados dados --saida resultados/demo/servidor-cpp --workers 6 --aquecer 30x30,60x60
-   ```
+### 6. Monitor (depois que o servidor estiver no ar)
 
-   Atende: versão compilada e fortemente tipada recebendo a mesma sequência de sinais.
+```bash
+.venv/bin/python -m monitor --servidor http://127.0.0.1:8000
+```
 
-8. Saturação: gere uma rajada e rode os três clientes do passo 5 com `--carga resultados/demo/rajada.json`. Com `--fila-max 40` no servidor, o excesso volta como `503`.
+Abra <http://127.0.0.1:8050>. Ao trocar de servidor, clique em **Nova rodada**.
 
-   ```bash
-   .venv/bin/python -m cliente.manifesto --semente 42 --clientes 3 --sinais-por-cliente 60 --modelos 30x30 --intervalo-max 0.05 --saida resultados/demo/rajada.json
-   ```
+### 7. Clientes (um por terminal, com alguns segundos de diferença)
 
-   Atende: teste de saturação e controle para o servidor não saturar.
+Troque `carga-completa.json` pela carga gerada no passo 4.
 
-9. Comparativo: o monitor de cada rodada e a tabela de [Resultados](#resultados).
+```bash
+.venv/bin/python -m cliente.instancia --carga resultados/demo/carga-completa.json --cliente 1 --servidor http://127.0.0.1:8000
+```
 
-   Atende: total de imagens, tempo total, CPU e memória, média e moda da fila e tempo médio de reconstrução, nas duas versões.
+```bash
+.venv/bin/python -m cliente.instancia --carga resultados/demo/carga-completa.json --cliente 2 --servidor http://127.0.0.1:8000
+```
+
+```bash
+.venv/bin/python -m cliente.instancia --carga resultados/demo/carga-completa.json --cliente 3 --servidor http://127.0.0.1:8000
+```
+
+Ou os três ao mesmo tempo, num terminal só:
+
+```bash
+for n in 1 2 3; do .venv/bin/python -m cliente.instancia --carga resultados/demo/carga-completa.json --cliente $n --servidor http://127.0.0.1:8000 & done; wait
+```
+
+### 8. Ver os resultados (depois que os clientes terminarem)
+
+```bash
+open resultados/demo/carga-completa/python/cliente-001/*/relatorio_cliente.csv
+```
+
+```bash
+open resultados/demo/carga-completa/python/cliente-001/*/cliente/jobs
+```
+
+Troque `python` por `cpp` para a rodada do C++, e `cliente-001` pelo cliente desejado.
+
+### 9. Saturação (no fim)
+
+Suba o servidor do passo 5 com `--fila-max 40 --aquecer 30x30`, gere a rajada e rode os três clientes do passo 7 com `--carga resultados/demo/rajada.json`. Parte dos pedidos volta como `fila cheia (503)` e nenhum falha.
+
+```bash
+.venv/bin/python -m cliente.manifesto --semente 42 --clientes 3 --sinais-por-cliente 60 --modelos 30x30 --intervalo-max 0.05 --saida resultados/demo/rajada.json
+```
+
+### 10. Limpar resultados (antes de uma nova apresentação)
+
+Com servidor e clientes parados:
+
+```bash
+rm -rf resultados/demo
+```
+
+### Se a porta 8000 estiver ocupada
+
+```bash
+lsof -nP -iTCP:8000 -sTCP:LISTEN
+```
+
+Pare o processo listado com `Ctrl+C` no terminal dele, ou use `--porta 8001` no servidor e `http://127.0.0.1:8001` no monitor e nos clientes.

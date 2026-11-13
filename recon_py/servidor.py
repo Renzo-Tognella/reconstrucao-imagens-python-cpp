@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import signal
+import socket
 import sys
 import time
 from pathlib import Path
@@ -61,6 +62,7 @@ def main(argv: list[str] | None = None) -> None:
     desconhecidos = sorted(set(a_aquecer) - set(modelos))
     if desconhecidos:
         sys.exit(f"modelo desconhecido em --aquecer: {', '.join(desconhecidos)}")
+    porta = _ocupar_porta(args.porta)
     opcoes = OpcoesFila(
         workers=args.workers,
         fila_max=args.fila_max,
@@ -71,22 +73,31 @@ def main(argv: list[str] | None = None) -> None:
     fila = montar_fila(modelos, opcoes, args.saida)
     aquecimento_s = _medir_aquecimento(fila, a_aquecer)
     app = criar_app(fila, modelos, DescricaoServidor(args.workers, args.blas_threads, aquecimento_s))
-    _anunciar(args, sorted(modelos), a_aquecer, aquecimento_s)
-    config = uvicorn.Config(
-        app, host="127.0.0.1", port=args.porta, log_level="warning", access_log=False, timeout_graceful_shutdown=5
-    )
+    _anunciar(args, porta.getsockname()[1], sorted(modelos), a_aquecer, aquecimento_s)
+    config = uvicorn.Config(app, log_level="warning", access_log=False, timeout_graceful_shutdown=5)
     signal.signal(signal.SIGTERM, signal.SIG_IGN)
     signal.signal(signal.SIGINT, signal.SIG_IGN)
-    uvicorn.Server(config).run()
+    uvicorn.Server(config).run(sockets=[porta])
 
 
-def _anunciar(args, modelos: list[str], aquecidos: list[str], aquecimento_s: float) -> None:
+def _ocupar_porta(numero: int) -> socket.socket:
+    porta = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    porta.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    try:
+        porta.bind(("127.0.0.1", numero))
+    except OSError as erro:
+        porta.close()
+        sys.exit(f"servidor python: não ligou em 127.0.0.1:{numero} ({erro.strerror})")
+    return porta
+
+
+def _anunciar(args, numero_porta: int, modelos: list[str], aquecidos: list[str], aquecimento_s: float) -> None:
     from recon_py.api.rotas.metricas import descrever_blas
     from recon_py.infraestrutura.log_terminal import cabecalho, escrever
 
     aquecidos_txt = f"; aquecido: {', '.join(aquecidos)} em {aquecimento_s:.2f} s".replace(".", ",") if aquecidos else ""
     for linha in (
-        f"Servidor Python em http://127.0.0.1:{args.porta} (Ctrl+C para parar)",
+        f"Servidor Python em http://127.0.0.1:{numero_porta} (Ctrl+C para parar)",
         f"  {args.workers} reconstruções ao mesmo tempo, {args.blas_threads} thread BLAS em cada uma, BLAS {descrever_blas()}",
         f"  Modelos: {', '.join(modelos)}{aquecidos_txt}",
         f"  Eventos também em {args.saida / 'events.jsonl'}",

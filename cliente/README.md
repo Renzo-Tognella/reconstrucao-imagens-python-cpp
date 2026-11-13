@@ -1,6 +1,6 @@
 # Cliente
 
-Envia os sinais de ultrassom ao servidor, espera as imagens e gera um relatório HTML. Funciona igual com o servidor Python e o C++. Todos os comandos rodam na raiz do projeto, com um servidor já ligado.
+Envia os sinais de ultrassom ao servidor, espera as imagens e grava os resultados em CSV. Funciona igual com o servidor Python e o C++. Todos os comandos rodam na raiz do projeto, com um servidor já ligado.
 
 ## Subir
 
@@ -23,6 +23,12 @@ Envia os sinais de ultrassom ao servidor, espera as imagens e gera um relatório
    ```bash
    .venv/bin/python -m cliente.instancia --carga resultados/demo/carga-completa.json --cliente 3 --servidor http://127.0.0.1:8000
    ```
+
+Ou os três juntos, num terminal só:
+
+```bash
+for n in 1 2 3; do .venv/bin/python -m cliente.instancia --carga resultados/demo/carga-completa.json --cliente $n --servidor http://127.0.0.1:8000 & done; wait
+```
 
 Cada cliente mostra a tabela de envios, a tabela de imagens prontas e um resumo, e grava tudo em `resultados/demo/<carga>/<python|cpp>/cliente-00N/<data-hora>/`.
 
@@ -70,10 +76,10 @@ CLIENTE_E2E_REAL=1 .venv/bin/python -m pytest -q tests/cliente/demonstracao -k r
 1. No mínimo 3 clientes ao mesmo tempo: os três terminais do passo 2.
 2. No mínimo 15 sinais por cliente em intervalos aleatórios: tabela ENVIOS, coluna `saiu aos`.
 3. Ganho e modelo sorteados, ganho aplicado no cliente: colunas `modelo` e `ganho`; a fórmula está em `carga/ganho.py`.
-4. Relatório com todas as imagens e os dados de cada uma (cliente, sinal, algoritmo, início, fim e iterações):
+4. Relatório com todas as imagens e os dados de cada uma (cliente, sinal, algoritmo, início, fim e iterações). Uma linha por pedido; a coluna `imagem` aponta para o PNG em `cliente/jobs/`:
 
    ```bash
-   open resultados/demo/carga-completa/python/cliente-001/*/relatorio_cliente.html
+   open resultados/demo/carga-completa/python/cliente-001/*/relatorio_cliente.csv
    ```
 
 5. Mesma sequência para as duas versões: rode os três clientes com o mesmo arquivo de carga, primeiro contra o servidor Python e depois contra o C++.
