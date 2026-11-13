@@ -1,4 +1,4 @@
-// Linha do tempo das tarefas em <saida>/events.jsonl, um JSON por linha.
+// Linha do tempo das tarefas em <saida>/events.jsonl, um JSON por linha, e uma linha legível no terminal.
 #pragma once
 
 #include "aplicacao/portas/eventos.hpp"
@@ -13,7 +13,7 @@ public:
     explicit EventosJsonl(const std::filesystem::path& saida);
 
     void registrar(const char* evento, const std::string& job_id, std::size_t queue_depth,
-                   std::size_t running) override;
+                   std::size_t running, const Tarefa* tarefa) override;
 
 private:
     std::ofstream arquivo_;

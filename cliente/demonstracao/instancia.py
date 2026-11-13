@@ -24,7 +24,7 @@ from cliente.carga.sinais import crc32_arquivo
 from cliente.comum.caminhos import DADOS_PADRAO, PASTA_DEMO
 from cliente.comum.interrupcao import sair_por_sinal
 from cliente.comum.registros import ler_json
-from cliente.demonstracao.terminal import Pintor, Terminal, cor_ativa, linhas_resumo
+from cliente.demonstracao.terminal import Pintor, Terminal, cor_ativa, linhas_resumo, nome_servidor, numero
 from cliente.envio.enviar_sinais import CargaInvalida, executar_carga
 from cliente.relatorios.relatorio_cliente import gerar_relatorio
 
@@ -100,11 +100,20 @@ def _registro_inicial(cliente: str, url: str, info: dict, carga_caminho: Path, p
                       "semente": propria.get("semente"), "pedidos": len(propria["pedidos"])}}
 
 
-def _cabecalho(cliente: str, propria: dict, info: dict, url: str, pintar: Pintor) -> str:
-    ultimo = max(p["instante_planejado_s"] for p in propria["pedidos"])
-    return pintar(f"{cliente} · {len(propria['pedidos'])} sinais · último envio em t+{ultimo:.3f}s · "
-                  f"servidor {info.get('implementation')} (W={info.get('workers')}, "
-                  f"B={info.get('blas_threads')}) em {url}", "negrito")
+def _cabecalho(cliente: str, propria: dict, info: dict, url: str, saida: Path, intervalo_consulta_s: float,
+               pintar: Pintor) -> list[str]:
+    instantes = [p["instante_planejado_s"] for p in propria["pedidos"]]
+    numero_cliente = int(cliente.rsplit("-", 1)[1])
+    threads = info.get("blas_threads")
+    return [
+        pintar(f"Cliente {numero_cliente} → servidor {nome_servidor(info.get('implementation'))} em {url}", "negrito"),
+        f"  {info.get('workers')} reconstruções ao mesmo tempo, {threads} thread BLAS em cada uma",
+        f"  {len(instantes)} sinais, enviados entre {numero(min(instantes), 1)} s e {numero(max(instantes), 1)} s "
+        "depois do início",
+        f"  Depois do último envio, pergunta ao servidor a cada {numero(intervalo_consulta_s, 1)} s "
+        "se as imagens ficaram prontas",
+        f"  Resultados em {saida}",
+    ]
 
 
 def executar_instancia(carga_caminho: Path, numero: int, url: str = URL_PADRAO, *, saida: Path | None = None,
@@ -121,9 +130,10 @@ def executar_instancia(carga_caminho: Path, numero: int, url: str = URL_PADRAO, 
     _gravar_execucao(saida, registro)
 
     pintar = Pintor(cor)
-    tela = Terminal(terminal, pintar)
-    tela.escrever(_cabecalho(cliente, propria, info, url, pintar))
-    tela.escrever(f"saída: {saida}")
+    tela = Terminal(terminal, pintar, propria["pedidos"], intervalo_consulta_s)
+    for linha in _cabecalho(cliente, propria, info, url, saida, intervalo_consulta_s, pintar):
+        tela.escrever(linha)
+    tela.abrir_envios()
     try:
         resumo = asyncio.run(executar_carga(propria, url=url, dados=dados, saida=saida / "cliente", limite_s=limite_s,
                                             intervalo_consulta_s=intervalo_consulta_s, observador=tela))

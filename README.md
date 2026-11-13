@@ -103,6 +103,8 @@ A demonstração usa 5 terminais: um para o servidor, um para o monitor e um par
 
    Com `--aquecer`, o servidor carrega a matriz antes de abrir a porta. Quando a porta abre, ele já aceita pedidos.
 
+   O terminal do servidor mostra uma linha por evento de cada pedido (recebido, iniciado, concluído, recusado ou falhou), com o tamanho da fila e quantas reconstruções estão rodando. Os mesmos eventos ficam em `events.jsonl`, na pasta de `--saida`.
+
 3. Terminal 2, ligar o monitor e abrir <http://127.0.0.1:8050> no navegador:
 
    ```bash

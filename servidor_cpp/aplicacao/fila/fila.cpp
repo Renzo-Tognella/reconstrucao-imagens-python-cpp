@@ -123,5 +123,7 @@ void Fila::juntar_threads() {
 }
 
 void Fila::registrar_evento(const char* evento, const std::string& job_id) {
-    eventos_.registrar(evento, job_id, fila_.size(), em_execucao_);
+    const auto tarefa = tarefas_.find(job_id);
+    eventos_.registrar(evento, job_id, fila_.size(), em_execucao_,
+                       tarefa == tarefas_.end() ? nullptr : tarefa->second.get());
 }

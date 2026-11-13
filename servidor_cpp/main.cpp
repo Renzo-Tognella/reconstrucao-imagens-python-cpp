@@ -4,6 +4,7 @@
 #include "http/servidor_http.hpp"
 #include "infraestrutura/blas.hpp"
 #include "infraestrutura/eventos_jsonl.hpp"
+#include "infraestrutura/log_terminal.hpp"
 #include "infraestrutura/manifesto.hpp"
 #include "infraestrutura/matriz_mapeada.hpp"
 #include "infraestrutura/resultados_em_disco.hpp"
@@ -55,6 +56,36 @@ ConfiguracaoFila configuracao_da_fila(const Opcoes& opcoes) {
     return configuracao;
 }
 
+std::string juntar(const std::vector<std::string>& nomes) {
+    std::string texto;
+    for (const std::string& nome : nomes) {
+        texto += (texto.empty() ? "" : ", ") + nome;
+    }
+    return texto;
+}
+
+void anunciar(const Opcoes& opcoes, const CatalogoModelos& catalogo, double aquecimento_s, int blas_threads) {
+    char aquecimento[32];
+    std::snprintf(aquecimento, sizeof aquecimento, "%.2f s", aquecimento_s);
+    std::string aquecimento_txt(aquecimento);
+    for (char& c : aquecimento_txt) {
+        c = c == '.' ? ',' : c;
+    }
+    const std::string aquecidos =
+        opcoes.aquecer.empty() ? "" : "; aquecido: " + juntar(opcoes.aquecer) + " em " + aquecimento_txt;
+    for (const std::string& linha : {
+             "Servidor C++ em http://127.0.0.1:" + std::to_string(*opcoes.porta) + " (Ctrl+C para parar)",
+             "  " + std::to_string(opcoes.workers) + " reconstruções ao mesmo tempo, " + std::to_string(blas_threads) +
+                 " thread BLAS em cada uma, BLAS " + blas::descricao_backend(),
+             "  Modelos: " + juntar(catalogo.nomes()) + aquecidos,
+             "  Eventos também em " + opcoes.saida + "/events.jsonl",
+             std::string(),
+             log_terminal::cabecalho(),
+         }) {
+        log_terminal::escrever(linha);
+    }
+}
+
 // O handler só marca o pedido; parar o servidor aloca e espera, então acontece aqui.
 void esperar_encerramento() {
     while (!pedido_encerramento.load() && !escuta_terminou.load()) {
@@ -87,6 +118,7 @@ int main(int argc, char** argv) {
         ServidorHttp http(fila, catalogo,
                           InfoServidor{opcoes.workers, blas_threads, aquecimento_s, blas::descricao_backend()});
         http.ligar(*opcoes.porta);
+        anunciar(opcoes, catalogo, aquecimento_s, blas_threads);
         std::thread escuta([&http] {
             http.escutar();
             escuta_terminou.store(true);

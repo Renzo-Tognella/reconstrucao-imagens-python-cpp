@@ -86,6 +86,7 @@ target_link_libraries(camada_aplicacao PUBLIC camada_dominio)
 add_library(camada_infraestrutura STATIC
   servidor_cpp/infraestrutura/arquivos.cpp
   servidor_cpp/infraestrutura/eventos_jsonl.cpp
+  servidor_cpp/infraestrutura/log_terminal.cpp
   servidor_cpp/infraestrutura/manifesto.cpp
   servidor_cpp/infraestrutura/matriz_mapeada.cpp
   servidor_cpp/infraestrutura/resultados_em_disco.cpp)

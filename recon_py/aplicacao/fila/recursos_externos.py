@@ -20,7 +20,8 @@ class Resultados(Protocol):
 class Eventos(Protocol):
     caminho: Path
 
-    def registrar(self, registro: dict) -> None: ...
+    # `tarefa` é o corpo atual da tarefa (None quando ela foi recusada); serve só para o log do terminal.
+    def registrar(self, registro: dict, tarefa: dict | None = None) -> None: ...
 
     def fechar(self) -> None: ...
 

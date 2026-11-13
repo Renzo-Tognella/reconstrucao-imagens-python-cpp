@@ -42,6 +42,12 @@ def rodar(caminho, numero, url, dados, saida, **opcoes):
     return resultado, terminal.getvalue()
 
 
+def linhas_de_imagem(texto: str) -> list[str]:
+    """Linhas da tabela IMAGENS com tempo de reconstrução (as imagens prontas)."""
+    depois = texto.split("IMAGENS", 1)[1].splitlines()
+    return [l for l in depois if re.search(r"\d+/\d+\s+[\d,]+ s\s+[\d,]+ s", l)]
+
+
 def envios(saida: Path) -> list[dict]:
     return [json.loads(l) for l in (saida / "cliente" / "envios.jsonl").read_text().splitlines()]
 
@@ -111,61 +117,75 @@ INSTANTE = time.mktime((2026, 11, 12, 12, 34, 56, 0, 0, -1)) + 0.789
 def test_linha_de_envio_tem_os_campos_pedidos():
     registro = {"t_envio_wall": INSTANTE, "efetivo_s": 1.502, "status_http": 202, "duracao_post_s": 0.0123,
                 "desfecho": "aceito", "erro": None}
-    linha = linha_envio(PEDIDO, registro, SEM_COR)
-    for trecho in ("12:34:56.789", "ENVIO", "c001-s0002", "sinal g2", "modelo 30x30", "ganho sim", "cgne",
-                   "HTTP 202", "12.3 ms"):
+    linha = linha_envio(PEDIDO, registro, "2/3", SEM_COR)
+    for trecho in ("12:34:56", "2/3", "1,5 s", "g2", "30x30", "CGNE", "sim", "aceito (202)", "12,3 ms"):
         assert trecho in linha
     assert not ANSI.search(linha) and "\n" not in linha
+
+
+def test_colunas_de_envio_ficam_alinhadas():
+    curto = linha_envio(PEDIDO, {"t_envio_wall": INSTANTE, "efetivo_s": 1.5, "status_http": 202,
+                                 "duracao_post_s": 0.002, "desfecho": "aceito", "erro": None}, "2/3", SEM_COR)
+    longo = linha_envio(PEDIDO, {"t_envio_wall": INSTANTE, "efetivo_s": 31.25, "status_http": 503,
+                                 "duracao_post_s": 0.0345, "desfecho": "rejeitado", "erro": "queue_full"},
+                        "12/15", SEM_COR)
+    assert curto.index("g2") == longo.index("g2") and curto.index("ms") == longo.index("ms")
 
 
 def test_linha_de_envio_recusado_e_sem_resposta():
     recusado = linha_envio({**PEDIDO, "ganho": False},
                            {"t_envio_wall": INSTANTE, "efetivo_s": 1.5, "status_http": 503, "duracao_post_s": 0.002,
-                            "desfecho": "rejeitado", "erro": "queue_full"}, SEM_COR)
-    assert "HTTP 503 queue_full" in recusado and "ganho não" in recusado
+                            "desfecho": "rejeitado", "erro": "queue_full"}, "2/3", SEM_COR)
+    assert "fila cheia (503)" in recusado and " não " in recusado
     caido = linha_envio(PEDIDO, {"t_envio_wall": INSTANTE, "efetivo_s": 1.5, "status_http": None,
-                                 "duracao_post_s": 0.001, "desfecho": "erro_transporte", "erro": "ConnectError"}, SEM_COR)
+                                 "duracao_post_s": 0.001, "desfecho": "erro_transporte", "erro": "ConnectError"},
+                        "2/3", SEM_COR)
     assert "sem resposta (ConnectError)" in caido
 
 
 def test_linha_de_progresso_conta_estados():
     linha = linha_progresso(INSTANTE, 4, {"prontas": 2, "na_fila": 1, "reconstruindo": 1, "falhas": 0, "sem_resposta": 0},
                             total=4, pintar=SEM_COR)
-    assert "12:34:56.789" in linha and "CONSULTA 4" in linha
-    assert "prontas 2/4" in linha and "na fila 1" in linha and "reconstruindo 1" in linha
-    assert "falhas" not in linha
+    assert "12:34:56" in linha and "consulta 4: 2 de 4 prontas, 1 na fila, 1 reconstruindo" in linha
+    assert "falha" not in linha
     com_falha = linha_progresso(INSTANTE, 1, {"prontas": 0, "na_fila": 0, "reconstruindo": 0, "falhas": 1, "sem_resposta": 2},
                                 total=3, pintar=SEM_COR)
-    assert "falhas 1" in com_falha and "sem resposta 2" in com_falha
+    assert "1 com falha" in com_falha and "2 sem resposta" in com_falha and "na fila" not in com_falha
 
 
 def test_linha_de_imagem_pronta_e_de_falha():
     job = {"queue_wait_s": 0.0123, "duration_s": 0.4567, "iterations": 10, "stop_reason": "max_iterations"}
-    pronta = linha_desfecho(INSTANTE, "c001-s0002", "done", job, None, SEM_COR)
-    for trecho in ("PRONTA", "c001-s0002", "fila 0.012 s", "reconstrução 0.457 s", "10 iterações"):
+    pronta = linha_desfecho(INSTANTE, "2/3", "done", job, None, SEM_COR)
+    for trecho in ("12:34:56", "2/3", "0,012 s", "0,457 s", "10 (limite)"):
         assert trecho in pronta
-    falha = linha_desfecho(INSTANTE, "c001-s0003", "failed", {"error": "numerical_failure"}, "numerical_failure", SEM_COR)
-    assert "FALHOU" in falha and "numerical_failure" in falha
-    sem_fim = linha_desfecho(INSTANTE, "c001-s0004", "sem_conclusao", None, None, SEM_COR)
-    assert "SEM FIM" in sem_fim
+    convergiu = linha_desfecho(INSTANTE, "2/3", "done", {**job, "iterations": 4, "stop_reason": "tolerance"}, None,
+                               SEM_COR)
+    assert "4 (convergiu)" in convergiu
+    falha = linha_desfecho(INSTANTE, "3/3", "failed", {"error": "numerical_failure"}, "numerical_failure", SEM_COR)
+    assert "falhou: numerical_failure" in falha
+    sem_fim = linha_desfecho(INSTANTE, "3/3", "sem_conclusao", None, None, SEM_COR)
+    assert "não terminou" in sem_fim
 
 
 def test_resumo_mostra_contagens_e_tempos():
     resumo = {"pedidos": 3, "nao_enviados": 0, "concluidos": 2, "rejeitados": 1, "erros_http": 0, "falhas": 0,
               "sem_conclusao": 0, "erros_download": 0, "erros_transporte": 0, "t0_wall": 100.0, "fim_wall": 104.25}
     jobs = [{"queue_wait_s": 0.1, "duration_s": 0.5}, {"queue_wait_s": 0.3, "duration_s": 0.7}]
-    texto = "\n".join(linhas_resumo("cliente-001", resumo, jobs, Path("/x/relatorio_cliente.html"), SEM_COR))
-    for trecho in ("enviados 3", "concluídos 2", "recusados 1", "tempo total do cliente 4.25 s",
-                   "tempo médio por imagem 0.800 s", "fila 0.200 s", "reconstrução 0.600 s", "/x/relatorio_cliente.html"):
+    linhas = linhas_resumo("cliente-001", resumo, jobs, Path("/x/relatorio_cliente.html"), SEM_COR)
+    texto = "\n".join(linhas)
+    assert "RESUMO DO CLIENTE 1" in texto
+    assert re.search(r"Imagens prontas\s+2 de 3", texto) and re.search(r"Recusadas pelo servidor\s+1", texto)
+    for trecho in ("4,25 s", "0,800 s (0,200 s na fila + 0,600 s reconstruindo)", "/x/relatorio_cliente.html"):
         assert trecho in texto
+    assert "Com falha" not in texto
 
 
 def test_cor_so_quando_ligada():
     registro = {"t_envio_wall": INSTANTE, "efetivo_s": 1.5, "status_http": 202, "duracao_post_s": 0.01,
                 "desfecho": "aceito", "erro": None}
-    colorida = linha_envio(PEDIDO, registro, COM_COR)
+    colorida = linha_envio(PEDIDO, registro, "2/3", COM_COR)
     assert ANSI.search(colorida)
-    assert ANSI.sub("", colorida) == linha_envio(PEDIDO, registro, SEM_COR)
+    assert ANSI.sub("", colorida) == linha_envio(PEDIDO, registro, "2/3", SEM_COR)
 
 
 def test_deteccao_de_cor():
@@ -188,12 +208,14 @@ def test_terminal_relatorio_e_registros_com_stub(dados, subir_stub, tmp_path):
     saida = tmp_path / "c1"
     resultado, texto = rodar(gravar(nova_carga(dados), tmp_path), 1, stub.url, dados, saida)
     linhas = texto.splitlines()
-    assert sum("ENVIO" in l for l in linhas) == 3
-    assert sum("PRONTA" in l for l in linhas) == 3
-    assert any("CONSULTA" in l and "prontas 3/3" in l for l in linhas)
-    # Todos os envios aparecem antes da primeira consulta.
-    assert max(i for i, l in enumerate(linhas) if "ENVIO" in l) < min(i for i, l in enumerate(linhas) if "CONSULTA" in l)
-    assert any("concluídos 3" in l for l in linhas) and not ANSI.search(texto)
+    assert "Cliente 1 → servidor" in texto and "3 sinais, enviados entre" in texto
+    assert sum("aceito (202)" in l for l in linhas) == 3
+    assert len(linhas_de_imagem(texto)) == 3
+    assert any("consulta" in l and "3 de 3 prontas" in l for l in linhas)
+    # Todos os envios aparecem antes da tabela de imagens.
+    assert max(i for i, l in enumerate(linhas) if "aceito (202)" in l) < linhas.index("IMAGENS")
+    assert "Os 3 envios terminaram" in texto
+    assert re.search(r"Imagens prontas\s+3 de 3", texto) and not ANSI.search(texto)
     html = (saida / "relatorio_cliente.html").read_text(encoding="utf-8")
     assert html.count('src="data:image/png;base64,') == 3 and "cliente-001" in html and "c002-" not in html
     carga_propria = json.loads((saida / "carga.json").read_text())
@@ -273,7 +295,7 @@ def test_tres_terminais_com_servidor_python_real(tmp_path):
         saidas = [c.communicate(timeout=180)[0] for c in clientes]
         for numero, (cliente, texto) in enumerate(zip(clientes, saidas), start=1):
             assert cliente.returncode == 0, texto
-            assert "concluídos 3" in texto and texto.count("PRONTA") == 3
+            assert re.search(r"Imagens prontas\s+3 de 3", texto) and len(linhas_de_imagem(texto)) == 3
             html = (tmp_path / f"c{numero}" / "relatorio_cliente.html").read_text(encoding="utf-8")
             assert html.count('src="data:image/png;base64,') == 3
             registro = json.loads((tmp_path / f"c{numero}" / "execucao.json").read_text())

@@ -137,7 +137,8 @@ class Fila:
                 "job_id": job_id,
                 "queue_depth": len(self._fila),
                 "running": self._em_execucao,
-            }
+            },
+            self._tarefas[job_id].corpo if job_id in self._tarefas else None,
         )
 
     def _despachar(self) -> None:
