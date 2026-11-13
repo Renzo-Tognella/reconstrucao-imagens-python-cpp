@@ -1,11 +1,3 @@
-"""Um cliente por terminal: envia só os pedidos do cliente N da carga, na agenda contada do início deste processo.
-
-Uso: python -m cliente.instancia --carga <carga.json> --cliente 1 --servidor http://127.0.0.1:8000 [--saida <pasta>]
-
-A agenda (`instante_planejado_s`) vem da carga, então a sequência é a mesma contra o servidor Python e o C++.
-O t0 é o início da agenda nesta instância, depois de ler a carga e conferir o servidor; cada terminal tem o seu.
-Código de saída: 0 se todas as imagens ficaram prontas, 1 se alguma não ficou, 2 se o servidor não respondeu.
-"""
 from __future__ import annotations
 
 import argparse
@@ -40,7 +32,6 @@ def id_cliente(numero: int) -> str:
 
 
 def pedidos_do_cliente(carga: dict, numero: int) -> dict:
-    """Cópia da carga com só os pedidos do cliente N, na ordem do arquivo."""
     alvo = id_cliente(numero)
     pedidos = [p for p in carga["pedidos"] if p["client_id"] == alvo]
     if not pedidos:
@@ -50,11 +41,6 @@ def pedidos_do_cliente(carga: dict, numero: int) -> dict:
 
 
 def com_ids_da_execucao(carga: dict, carimbo: str) -> dict:
-    """Acrescenta o carimbo da execução a cada job_id.
-
-    O servidor guarda as tarefas enquanto está ligado. Sem o carimbo, rodar a mesma carga de novo cairia em
-    "já recebido" (200, nenhuma reconstrução nova) ou, se outra carga usou o mesmo id, em job_conflict (409).
-    """
     return {**carga, "pedidos": [{**p, "job_id": f"{p['job_id']}-{carimbo}"} for p in carga["pedidos"]]}
 
 
@@ -80,7 +66,6 @@ def _gravar_execucao(saida: Path, registro: dict) -> None:
 def _relatorio(saida: Path, tela: Terminal) -> Path | None:
     if not (saida / "cliente" / "envios.jsonl").exists():
         return None
-    # Falha no relatório não pode esconder o erro original nem os registros já gravados.
     try:
         return gerar_relatorio(saida)
     except (OSError, ValueError, KeyError) as erro:
@@ -150,7 +135,6 @@ def executar_instancia(carga_caminho: Path, numero: int, url: str = URL_PADRAO, 
         resumo = asyncio.run(executar_carga(propria, url=url, dados=dados, saida=saida / "cliente", limite_s=limite_s,
                                             intervalo_consulta_s=intervalo_consulta_s, observador=tela))
     finally:
-        # Mesmo interrompido, o relatório mostra o que chegou a acontecer.
         relatorio = _relatorio(saida, tela)
     registro["resumo_carga"] = resumo
     _gravar_execucao(saida, registro)
@@ -160,7 +144,7 @@ def executar_instancia(carga_caminho: Path, numero: int, url: str = URL_PADRAO, 
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(description="Roda um cliente da carga contra o servidor.", formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--carga", type=Path, required=True, help="arquivo gerado por cliente.manifesto")
     parser.add_argument("--cliente", type=int, required=True, help="número do cliente na carga (1 = cliente-001)")
     parser.add_argument("--servidor", default=URL_PADRAO)

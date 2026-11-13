@@ -1,4 +1,3 @@
-"""CPU e memória do servidor (com filhos) e do sistema, na mesma convenção do coletor do relatório."""
 from __future__ import annotations
 
 import time

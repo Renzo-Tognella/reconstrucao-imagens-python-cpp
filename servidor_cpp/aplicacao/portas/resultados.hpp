@@ -1,5 +1,3 @@
-// Onde ficam os arquivos de cada tarefa (.json, .f64 e .pgm). Implementado em
-// infraestrutura/resultados_em_disco.hpp.
 #pragma once
 
 #include "aplicacao/fila/tarefa.hpp"

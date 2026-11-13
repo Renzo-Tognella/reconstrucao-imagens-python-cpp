@@ -1,4 +1,3 @@
-"""Saída no terminal da demonstração: tabela de envios, tabela de imagens prontas e resumo final."""
 from __future__ import annotations
 
 import statistics
@@ -11,7 +10,6 @@ ESTILOS = {"negrito": "1", "fraco": "2", "vermelho": "31", "verde": "32", "amare
 NOMES_SERVIDOR = {"python": "Python", "cpp": "C++"}
 PARADAS = {"tolerance": "convergiu", "max_iterations": "limite"}
 
-# (título, largura, alinhado à direita)
 COLUNAS_ENVIO = (("hora", 8, False), ("pedido", 6, True), ("saiu aos", 8, True), ("sinal", 5, False),
                  ("modelo", 6, False), ("algoritmo", 9, False), ("ganho", 5, False), ("resposta", 18, False),
                  ("envio", 8, True))
@@ -54,7 +52,6 @@ def nome_servidor(implementacao: str | None) -> str:
 
 def _linha(colunas: Sequence[tuple[str, int, bool]], valores: Sequence[tuple[str, tuple[str, ...]]],
            pintar: Pintor) -> str:
-    # Alinha antes de pintar: os códigos de cor contam caracteres e desalinhariam as colunas.
     partes = []
     for (_, largura, direita), (texto, estilos) in zip(colunas, valores):
         alinhado = texto.rjust(largura) if direita else texto.ljust(largura)
@@ -161,8 +158,6 @@ def rotulos_dos_pedidos(pedidos: Sequence[dict]) -> dict[str, str]:
 
 
 class Terminal:
-    """Observador da carga: uma linha por evento, já descarregada, para o professor acompanhar ao vivo."""
-
     def __init__(self, fluxo: TextIO, pintar: Pintor, pedidos: Sequence[dict] = (), intervalo_consulta_s: float = 1.0):
         self.fluxo, self.pintar = fluxo, pintar
         self.rotulos = rotulos_dos_pedidos(pedidos)

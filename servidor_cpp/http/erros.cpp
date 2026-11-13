@@ -4,7 +4,6 @@
 
 void responder_json(httplib::Response& res, int status, const Json& corpo) {
     res.status = status;
-    // replace: o detalhe de 404 ecoa o caminho do pedido, que pode não ser UTF-8 válido.
     res.set_content(corpo.dump(-1, ' ', false, Json::error_handler_t::replace), "application/json");
 }
 

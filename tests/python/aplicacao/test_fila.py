@@ -32,8 +32,6 @@ def modelo(tmp_path) -> Modelo:
 
 
 class AlgoritmoControlado:
-    """Só termina quando o teste libera, para fixar a intercalação entre as tarefas."""
-
     def __init__(self) -> None:
         self.liberar = threading.Event()
 
@@ -51,11 +49,9 @@ def controlado(monkeypatch) -> AlgoritmoControlado:
 
 @pytest.fixture
 def criar_fila(modelo, tmp_path, controlado):
-    # Depende de `controlado` para encerrar a fila antes de o algoritmo sair de ALGORITMOS.
     criadas = []
 
     def criar(trocas: dict | None = None, **opcoes) -> Fila:
-        """`trocas` substitui recursos externos reais, como a leitura de memória livre."""
         valores = dict(workers=1, fila_max=256, fila_max_bytes=2**28, reserva_bytes=0, espera_max_s=60.0) | opcoes
         recursos = replace(montar_recursos(tmp_path / "saida"), **(trocas or {}))
         fila = Fila({"m": modelo}, OpcoesFila(**valores), recursos)
@@ -90,12 +86,10 @@ def status(fila: Fila, job_id: str) -> str:
 
 
 def test_custo_conta_so_os_vetores_de_trabalho(modelo):
-    # H é mapeamento somente leitura de arquivo: o sistema recupera essas páginas sem usar swap.
     assert custo_bytes(modelo) == 8 * (2 * 7 + 3 * 3)
 
 
 def test_h_maior_que_a_memoria_fisica_falha_na_hora_sem_travar_quem_vem_atras(tmp_path, modelo, controlado):
-    # O arquivo de H nem precisa existir: a tarefa falha antes do primeiro mapeamento.
     gigante = Modelo("gigante", linhas=10**6, colunas=10**6, largura=1, altura=1, arquivo=tmp_path / "nao-existe.f64")
     fila = montar_fila({"m": modelo, "gigante": gigante}, OpcoesFila(1, 256, 2**28, 0, 60.0), tmp_path / "saida")
     fila.iniciar()
@@ -175,7 +169,6 @@ def test_contagem_nos_eventos_nao_inclui_em_execucao_na_fila(criar_fila, modelo,
 
 
 def test_tarefas_em_execucao_reservam_memoria(criar_fila, modelo, controlado):
-    # Cabe exatamente a primeira tarefa. A segunda precisa esperar, sem falhar enquanto há tarefa rodando.
     disponivel = custo_bytes(modelo) + 100
     fila = criar_fila({"memoria_livre": lambda: disponivel}, workers=2, reserva_bytes=100, espera_max_s=0.05)
     fila.submeter(pedido("a", modelo))
@@ -207,7 +200,6 @@ def test_cabeca_sem_memoria_e_sem_tarefas_rodando_falha(criar_fila, modelo, cont
 
 
 def test_prazo_de_memoria_so_conta_com_nada_em_execucao(criar_fila, modelo, controlado):
-    # Com W=2 a cabeça espera enquanto outra roda. O prazo só pode começar quando a última tarefa terminar.
     memoria = {"valor": 2**40}
     espera_max_s = 0.3
     fila = criar_fila({"memoria_livre": lambda: memoria["valor"]}, workers=2, reserva_bytes=1, espera_max_s=espera_max_s)
@@ -310,7 +302,6 @@ def test_falha_de_gravacao_vira_output_write_failed(criar_fila, modelo, controla
     esperar(lambda: status(fila, "b") == "done")
     corpo = fila.consultar("a")
     assert (corpo["status"], corpo["error"]) == ("failed", "output_write_failed")
-    # O cálculo terminou: as medidas continuam disponíveis mesmo sem os arquivos.
     assert corpo["iterations"] == 1
     assert corpo["duration_s"] > 0
     metricas = fila.metricas()
@@ -369,7 +360,6 @@ def test_fila_cheia_por_quantidade_e_por_bytes(criar_fila, modelo, controlado):
         fila.submeter(pedido("c", modelo))
     assert fila.metricas()["rejected"] == 1
     assert [e for e in eventos(fila) if e["event"] == "rejected"][0]["job_id"] == "c"
-    # A tarefa recusada não fica registrada: o mesmo id entra quando houver espaço.
     assert fila.consultar("c") is None
     controlado.liberar.set()
     esperar(lambda: fila.metricas()["completed"] == 2)

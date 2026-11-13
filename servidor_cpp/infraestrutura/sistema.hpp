@@ -1,4 +1,3 @@
-// Leituras do sistema operacional: memória livre, memória física e uso de CPU e RSS.
 #pragma once
 
 #include <sys/resource.h>
@@ -19,11 +18,6 @@
 
 namespace sistema {
 
-// macOS: free_count + inactive + purgeable, as páginas que o kernel entrega sem swap imediato.
-// Nesta API, free_count já inclui speculative (o vm_stat mostra "free" sem elas), então a única
-// diferença para psutil.available é purgeable. Linux: MemAvailable.
-// Uma leitura impossível devolve 0: a tarefa espera e falha com insufficient_memory em vez de
-// rodar sem controle.
 inline std::uint64_t memoria_disponivel_bytes() {
 #if defined(__APPLE__)
     static const host_t host = mach_host_self();
@@ -82,13 +76,13 @@ inline UsoRecursos uso_recursos() {
     rusage uso{};
     getrusage(RUSAGE_SELF, &uso);
 #if defined(__APPLE__)
-    const double bytes_por_unidade = 1.0;  // ru_maxrss em bytes no macOS
+    const double bytes_por_unidade = 1.0;
 #else
-    const double bytes_por_unidade = 1024.0;  // ru_maxrss em KiB no Linux
+    const double bytes_por_unidade = 1024.0;
 #endif
     const auto segundos = [](const timeval& t) { return static_cast<double>(t.tv_sec) + static_cast<double>(t.tv_usec) / 1e6; };
     return {static_cast<double>(uso.ru_maxrss) * bytes_por_unidade / (1024.0 * 1024.0),
             segundos(uso.ru_utime) + segundos(uso.ru_stime)};
 }
 
-}  // namespace sistema
+}

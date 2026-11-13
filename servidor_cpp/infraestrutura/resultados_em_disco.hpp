@@ -1,4 +1,3 @@
-// Arquivos de cada tarefa em <saida>/jobs: <job_id>.json, .f64 e .pgm.
 #pragma once
 
 #include "aplicacao/portas/resultados.hpp"

@@ -66,7 +66,6 @@ def test_cgnr_com_sinal_ortogonal_a_h_para_sem_iteracoes():
 
 
 def test_cgnr_para_com_residuo_zero_dentro_do_laco():
-    # A diferença entre normas é grande e o gradiente seguinte zera exatamente.
     resultado = cgnr(matriz([[1.0, 0.0], [0.0, 1.0]]), np.array([3.0, 0.0]))
     assert (resultado.iterations, resultado.stop_reason) == (1, "zero_residual")
     np.testing.assert_array_equal(resultado.f, [3.0, 0.0])
@@ -122,13 +121,11 @@ def test_sinal_de_tamanho_errado_e_recusado(algoritmo):
 
 @pytest.mark.parametrize("algoritmo", ALGORITMOS)
 def test_sinal_que_nao_e_float64_nativo_e_recusado(algoritmo):
-    # O wrapper converteria r numa cópia e daxpy atualizaria só a cópia: o resíduo ficaria errado sem erro.
     with pytest.raises(ValueError):
         algoritmo(np.ones((3, 2), order="F"), np.ones(3, dtype=np.float32))
 
 
 def test_controle_tracemalloc_detecta_copia_do_wrapper():
-    # Sem este controle, um pico baixo no teste seguinte não provaria ausência de cópia.
     ordem_c = np.ones((1000, 1000), order="C")
     tracemalloc.start()
     dgemv(1.0, ordem_c, np.ones(1000))
@@ -159,7 +156,6 @@ def test_wrappers_escrevem_nos_buffers_entregues(modelo_h):
 
 
 def test_reconstrucao_nao_causa_salto_de_rss():
-    # Roda em processo novo: ru_maxrss só cresce, e testes anteriores mascarariam uma cópia de H (192 MiB).
     roteiro = textwrap.dedent(
         """
         import json, resource
@@ -183,7 +179,6 @@ def test_reconstrucao_nao_causa_salto_de_rss():
 
 
 def _chamadas_em_que_outra_thread_avancou(chamada, repeticoes=10) -> int:
-    # O intervalo longo impede a troca forçada de thread: a outra só avança se a chamada soltar o GIL.
     contador = [0]
     parar = threading.Event()
 
@@ -209,8 +204,6 @@ def _chamadas_em_que_outra_thread_avancou(chamada, repeticoes=10) -> int:
 
 
 def test_produto_matriz_vetor_solta_o_gil():
-    # Sem isso, W threads em Python rodam em série e o servidor não processa imagens ao mesmo tempo.
-    # Máquina carregada só pode esconder a soltura, nunca inventá-la: por isso vale a melhor tentativa.
     H = np.asfortranarray(np.random.default_rng(0).random((2500, 2500)))
     x = np.ones(2500)
     y = np.empty(2500)

@@ -1,4 +1,3 @@
-// POST /jobs: recebe o sinal g e coloca a tarefa na fila.
 #include "http/erros.hpp"
 #include "http/rotas/rotas.hpp"
 #include "http/validacao_pedido.hpp"
@@ -52,7 +51,7 @@ void enviar_sinal(const httplib::Request& req, httplib::Response& res, Fila& fil
     responder_envio(res, job_id, fila.enviar(std::move(pedido)));
 }
 
-}  // namespace
+}
 
 void registrar_envio_de_sinal(httplib::Server& servidor, Fila& fila, const CatalogoModelos& catalogo) {
     servidor.Post("/jobs", [&fila, &catalogo](const httplib::Request& req, httplib::Response& res) {

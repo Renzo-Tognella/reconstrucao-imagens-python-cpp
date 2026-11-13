@@ -1,4 +1,3 @@
-// Catálogo de modelos lido de manifesto.json: nome, dimensões e arquivo de H de cada modelo.
 #pragma once
 
 #include "aplicacao/portas/modelos.hpp"
@@ -13,7 +12,6 @@
 
 class CatalogoManifesto : public CatalogoModelos {
 public:
-    // Lança std::runtime_error se o manifesto ou um arquivo H for inválido.
     explicit CatalogoManifesto(const std::filesystem::path& dados);
 
     const Modelo* procurar(const std::string& nome) const override;

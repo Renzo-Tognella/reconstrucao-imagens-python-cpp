@@ -1,4 +1,3 @@
-"""Mantém `python -m cliente.manifesto` funcionando; o código está em `cliente/carga/manifesto.py`."""
 from __future__ import annotations
 
 import sys

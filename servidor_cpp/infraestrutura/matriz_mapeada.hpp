@@ -1,4 +1,3 @@
-// Matriz H de um modelo, lida do arquivo .f64 por mmap.
 #pragma once
 
 #include "aplicacao/portas/modelos.hpp"
@@ -10,7 +9,6 @@
 #include <mutex>
 #include <string>
 
-// Dono do mmap. H é compartilhada entre tarefas sem cópia.
 class MapaSomenteLeitura {
 public:
     MapaSomenteLeitura(const std::filesystem::path& caminho, std::size_t bytes_esperados);
@@ -31,7 +29,6 @@ public:
                   std::filesystem::path arquivo);
 
     bool mapeado() const override { return mapeado_.load(std::memory_order_acquire); }
-    // Mapeia na primeira chamada; as demais reutilizam o mesmo mapeamento.
     MatrizColunas matriz() const override;
 
 private:
@@ -41,6 +38,4 @@ private:
     mutable std::atomic<bool> mapeado_{false};
 };
 
-// Mapeia H, lê todas as páginas e faz Hx e Hᵀx, para carregamento e inicialização da BLAS ficarem
-// fora de duration_s. Roda antes de aceitar conexões.
 void aquecer_modelo(const Modelo& modelo);

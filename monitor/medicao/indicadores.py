@@ -1,4 +1,3 @@
-"""Janela de tempo, fila média ponderada pelo tempo e moda, a partir dos eventos do servidor."""
 from __future__ import annotations
 
 from collections import Counter
@@ -12,7 +11,6 @@ def _ordenar(eventos: list[dict]) -> list[dict]:
 
 
 def janela_mono(eventos: list[dict]) -> tuple[float, float] | None:
-    """Da primeira chegada à última conclusão; sem conclusão, até o último evento."""
     if not eventos:
         return None
     ordenados = _ordenar(eventos)
@@ -24,7 +22,6 @@ def janela_mono(eventos: list[dict]) -> tuple[float, float] | None:
 
 
 def fila_media_temporal(eventos: list[dict]) -> float | None:
-    """∫ fila(t) dt / T, com fila(t) em degraus: cada evento informa o tamanho logo após ele."""
     janela = janela_mono(eventos)
     if janela is None or janela[1] <= janela[0]:
         return None

@@ -1,4 +1,3 @@
-"""Uma linha legível no terminal para cada evento da fila; o registro completo continua em events.jsonl."""
 from __future__ import annotations
 
 import sys
@@ -42,7 +41,6 @@ def cabecalho() -> str:
 
 
 def escrever(linha: str, fluxo: TextIO | None = None) -> None:
-    # Terminal fechado não pode derrubar a fila.
     try:
         print(linha, file=fluxo or sys.stdout, flush=True)
     except (OSError, ValueError):

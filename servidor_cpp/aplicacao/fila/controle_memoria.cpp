@@ -15,8 +15,6 @@ ControleMemoria::ControleMemoria(std::function<std::uint64_t()> memoria_disponiv
       reserva_(reserva),
       espera_max_s_(espera_max_s) {}
 
-// Nem esperando caberia, então a tarefa falha sem gastar o prazo. Soma em vez de subtração: a
-// reserva pode passar da memória física.
 bool ControleMemoria::nunca_cabe(const Modelo& modelo) const {
     if (modelo.mapeado()) {
         return false;
@@ -30,8 +28,6 @@ DecisaoMemoria ControleMemoria::avaliar(const Modelo& modelo, std::size_t em_exe
         return DecisaoMemoria::iniciar;
     }
     esperando_ = true;
-    // O prazo conta só o tempo contínuo sem nada em execução: a tarefa que termina devolve
-    // memória, e a cabeça merece o prazo inteiro depois disso.
     if (em_execucao > 0) {
         sem_execucao_desde_.reset();
         return DecisaoMemoria::aguardar;

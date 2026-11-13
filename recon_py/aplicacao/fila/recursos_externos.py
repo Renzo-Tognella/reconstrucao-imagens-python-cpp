@@ -1,4 +1,3 @@
-"""O que a fila pede ao mundo de fora. `recon_py/montagem.py` entrega as versões reais."""
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -20,7 +19,6 @@ class Resultados(Protocol):
 class Eventos(Protocol):
     caminho: Path
 
-    # `tarefa` é o corpo atual da tarefa (None quando ela foi recusada); serve só para o log do terminal.
     def registrar(self, registro: dict, tarefa: dict | None = None) -> None: ...
 
     def fechar(self) -> None: ...

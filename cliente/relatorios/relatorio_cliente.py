@@ -1,4 +1,3 @@
-"""Relatório HTML autossuficiente: uma linha por pedido, com a imagem e os dados exigidos no enunciado."""
 from __future__ import annotations
 
 import argparse
@@ -36,7 +35,6 @@ CABECALHOS = ["Imagem", "Situação", "Job", "Cliente", "Sinal", "Modelo", "Ganh
 
 
 def _situacao(envio: dict | None, desfecho: dict | None, tem_png: bool) -> tuple[str, bool]:
-    """Só é sucesso a tarefa concluída com a imagem presente."""
     if envio is None:
         return "sem registro de envio", False
     tipo = envio["desfecho"]
@@ -158,7 +156,7 @@ def gerar_relatorio(pasta: Path) -> Path:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description="Gera o relatório HTML de uma execução do cliente.")
     parser.add_argument("--execucao", type=Path, required=True, help="pasta gravada por cliente.instancia")
     args = parser.parse_args(argv)
     print(gerar_relatorio(args.execucao))

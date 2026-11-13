@@ -1,4 +1,3 @@
-"""Servidor falso que segue o contrato HTTP sem reconstruir nada; usado em processo ou pela linha de comando."""
 from __future__ import annotations
 
 import argparse
@@ -234,7 +233,6 @@ class Stub:
 
 
 def main() -> int:
-    """Mesma linha de comando do protocolo, para os testes tratarem o stub como um servidor."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--porta", type=int, required=True)
     parser.add_argument("--dados", type=Path, required=True)

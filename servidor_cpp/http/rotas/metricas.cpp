@@ -1,4 +1,3 @@
-// GET /metrics (contadores da fila) e GET /info (configuração do servidor).
 #include "http/erros.hpp"
 #include "http/rotas/rotas.hpp"
 
@@ -18,7 +17,7 @@ Json corpo_info(const CatalogoModelos& catalogo, const InfoServidor& info) {
     return corpo;
 }
 
-}  // namespace
+}
 
 void registrar_metricas_e_info(httplib::Server& servidor, const Fila& fila, const CatalogoModelos& catalogo,
                                const InfoServidor& info) {

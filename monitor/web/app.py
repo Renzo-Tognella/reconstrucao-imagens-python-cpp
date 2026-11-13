@@ -1,4 +1,3 @@
-"""Servidor HTTP do monitor: a página e o estado em JSON."""
 from __future__ import annotations
 
 import math
@@ -14,7 +13,6 @@ PAGINA = Path(__file__).with_name("pagina.html")
 
 
 def _sem_nao_finitos(valor):
-    # JSON não tem NaN nem infinito; o navegador recusaria a resposta inteira.
     if isinstance(valor, float) and not math.isfinite(valor):
         return None
     if isinstance(valor, dict):

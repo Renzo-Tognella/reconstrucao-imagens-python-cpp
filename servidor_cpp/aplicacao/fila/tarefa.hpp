@@ -1,4 +1,3 @@
-// Uma tarefa de reconstrução: o pedido recebido, o estado e o corpo JSON de GET /jobs/{id}.
 #pragma once
 
 #include "dominio/algoritmos/reconstrucao.hpp"
@@ -10,13 +9,11 @@
 #include <string>
 #include <vector>
 
-// CRC-32 igual ao zlib.crc32.
 std::uint32_t crc32(const void* dados, std::size_t tamanho);
 
 enum class EstadoTarefa { queued, running, done, failed };
 const char* nome_do_estado(EstadoTarefa estado);
 
-// Já validado pela camada HTTP. O modelo precisa existir no catálogo.
 struct PedidoTarefa {
     std::string job_id;
     std::string client_id;

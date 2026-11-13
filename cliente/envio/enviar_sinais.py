@@ -1,4 +1,3 @@
-"""Dispara a carga salva: um Task por cliente, agenda aberta por tempos absolutos, sem retry de envio."""
 from __future__ import annotations
 
 import argparse
@@ -25,8 +24,6 @@ DESFECHOS_ENVIO = {202: "aceito", 200: "reenvio", 503: "rejeitado"}
 
 
 class Observador(Protocol):
-    """Recebe cada evento já registrado em disco; usado para mostrar o andamento no terminal."""
-
     def envio(self, pedido: dict, registro: dict) -> None: ...
 
     def desfecho(self, job_id: str, desfecho: str, job: dict | None, erro: str | None) -> None: ...
@@ -35,11 +32,10 @@ class Observador(Protocol):
 
 
 class CargaInvalida(Exception):
-    """A carga salva não corresponde aos dados locais; enviar invalidaria a comparação."""
+    pass
 
 
 def preparar_corpos(carga: dict, dados: Path) -> dict[str, bytes]:
-    """Monta tudo antes do instante comum, para o ganho não atrapalhar a agenda. Corpos iguais são o mesmo objeto."""
     por_combinacao: dict[tuple, bytes] = {}
     corpos = {}
     for pedido in carga["pedidos"]:
@@ -70,8 +66,6 @@ def pgm_para_png(pgm: bytes, destino: Path) -> None:
 
 
 class _Registro:
-    """Linhas gravadas e descarregadas uma a uma: uma queda não apaga o que já aconteceu."""
-
     def __init__(self, caminho: Path):
         self.arquivo = caminho.open("w", encoding="utf-8")
 
@@ -131,8 +125,6 @@ class _Execucao:
                               status_http=status, desfecho=desfecho, erro=erro)
 
     async def _cliente(self, pedidos: list[dict]) -> None:
-        # Cada envio é uma tarefa própria: um POST lento não pode empurrar a agenda dos seguintes,
-        # senão a saturação do servidor reduziria a carga oferecida e sumiria das medidas.
         laco = asyncio.get_running_loop()
         async with asyncio.TaskGroup() as envios:
             for pedido in pedidos:
@@ -159,7 +151,6 @@ class _Execucao:
                 clientes.create_task(self._cliente(pedidos))
 
     async def _baixar(self, job: dict) -> str | None:
-        """Devolve a descrição do problema, ou None se imagem e vetor ficaram em disco."""
         job_id = job["job_id"]
         modelo = self.carga["modelos"].get(job["model"], {})
         try:
@@ -187,7 +178,6 @@ class _Execucao:
             self.observador.desfecho(job_id, desfecho, job, erro)
 
     async def _consultar(self, job_id: str, ultimos: dict[str, str | None]) -> bool:
-        """Devolve True quando a tarefa terminou. Erro de consulta é transitório até o limite."""
         try:
             resposta = await self.http.get(f"/jobs/{job_id}")
         except httpx.TransportError:
@@ -214,7 +204,6 @@ class _Execucao:
         limite = inicio + self.limite_s
         rodada = 0
         while pendentes and not self.parar.is_set():
-            # Consultas em série: o custo do cliente sobre o servidor não depende de quantas tarefas restam em paralelo.
             pendentes = [j for j in pendentes if not await self._consultar(j, ultimos)]
             rodada += 1
             if self.observador:
@@ -236,9 +225,7 @@ class _Execucao:
 
 async def _vigiar(execucao: _Execucao, vigia: Callable[[], str | None], intervalo_s: float, motivo: list[str]) -> None:
     while not execucao.parar.is_set():
-        # Vigia quebrado interrompe: seguir sem ele tiraria a proteção da máquina em silêncio.
         try:
-            # Em outra thread: o vigia lê disco e sistema, e a agenda de envios não pode esperar por isso.
             resultado = await asyncio.to_thread(vigia)
         except Exception as falha:
             resultado = f"vigia falhou: {falha}"
@@ -272,10 +259,8 @@ def _resumo(execucao: _Execucao, url: str, fim_envios_wall: float, interrompido:
 async def executar_carga(carga: dict, *, url: str, dados: Path, saida: Path, limite_s: float = 600.0,
                          intervalo_consulta_s: float = 1.0, vigia: Callable[[], str | None] | None = None,
                          intervalo_vigia_s: float = 1.0, observador: Observador | None = None) -> dict:
-    """`limite_s` conta a partir do fim dos envios. `vigia`, se devolver um motivo, interrompe envios e consultas."""
     corpos = preparar_corpos(carga, dados)
     (saida / "jobs").mkdir(parents=True, exist_ok=True)
-    # Sem keep-alive e sem proxy do ambiente: conecta, envia, fecha.
     limites = httpx.Limits(max_keepalive_connections=0, max_connections=None)
     tempos = httpx.Timeout(30.0, connect=5.0)
     motivo: list[str] = []
@@ -297,7 +282,7 @@ async def executar_carga(carga: dict, *, url: str, dados: Path, saida: Path, lim
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description="Envia uma carga inteira e espera as imagens.")
     parser.add_argument("--carga", type=Path, required=True)
     parser.add_argument("--url", required=True)
     parser.add_argument("--saida", type=Path, required=True)

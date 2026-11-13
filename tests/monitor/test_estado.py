@@ -25,7 +25,6 @@ def meta(job, cliente, status, espera=None, duracao=None, iteracoes=None, erro=N
             "iterations": iteracoes, "stop_reason": "tolerance" if status == "done" else None, "error": erro}
 
 
-# Um worker, três clientes. A roda de 0,1 a 2,1; B espera até 2,1 e roda até 4,1; C falha em 5,0. D é recusado.
 EVENTOS = [
     ev("accepted", "A", 0.0, 1, 0),
     ev("started", "A", 0.1, 0, 1),
@@ -108,7 +107,6 @@ def test_pedido_em_andamento_mede_ate_agora():
 def test_fila_media_temporal_e_moda_seguem_os_indicadores_do_cliente():
     amostras = [(BASE - 1, 9), (BASE + 0.5, 1), (BASE + 1.5, 2), (BASE + 2.5, 2), (BASE + 3.5, 1), (BASE + 4.5, 2), (BASE + 99, 5)]
     cartoes = montar_estado(EVENTOS, METADADOS, amostras, agora_wall=BASE + 120)["cartoes"]
-    # ∫fila dt: 1·0,1 + 0·0,4 + 1·0,1 + 2·0,1 + 2·1,4 + 1·2,0 + 0·0,9 = 5,2 em 5 s.
     assert cartoes["fila_media"] == pytest.approx(5.2 / 5.0)
     assert cartoes["fila_moda"] == [2]
     assert cartoes["fila_amostras"] == 5

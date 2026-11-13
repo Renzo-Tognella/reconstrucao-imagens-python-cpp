@@ -1,4 +1,3 @@
-"""Ponto de entrada do servidor Python. NumPy e SciPy só podem ser importados depois de fixar as threads da BLAS."""
 from __future__ import annotations
 
 import argparse
@@ -23,7 +22,7 @@ def _inteiro(minimo: int):
 
 
 def ler_argumentos(argv: list[str] | None = None) -> argparse.Namespace:
-    leitor = argparse.ArgumentParser(prog="python -m recon_py.servidor", description=__doc__)
+    leitor = argparse.ArgumentParser(prog="python -m recon_py.servidor", description="Servidor de reconstrução em Python.")
     leitor.add_argument("--porta", type=_inteiro(0), required=True)
     leitor.add_argument("--dados", type=Path, required=True)
     leitor.add_argument("--saida", type=Path, required=True)
@@ -76,12 +75,9 @@ def main(argv: list[str] | None = None) -> None:
     config = uvicorn.Config(
         app, host="127.0.0.1", port=args.porta, log_level="warning", access_log=False, timeout_graceful_shutdown=5
     )
-    # O uvicorn repete o sinal recebido depois do desligamento gracioso, o que encerraria com código -15.
-    # Com o tratador original ignorando o sinal, o processo termina com código 0.
     signal.signal(signal.SIGTERM, signal.SIG_IGN)
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     uvicorn.Server(config).run()
-
 
 
 def _anunciar(args, modelos: list[str], aquecidos: list[str], aquecimento_s: float) -> None:

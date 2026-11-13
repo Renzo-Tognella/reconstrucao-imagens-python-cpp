@@ -1,4 +1,3 @@
-"""Pedido recebido, tarefa na fila e os estados e erros que ela pode ter."""
 from __future__ import annotations
 
 import time

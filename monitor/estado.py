@@ -1,4 +1,3 @@
-"""Estado da rodada a partir dos eventos, dos JSONs das tarefas e das amostras de fila. Sem E/S."""
 from __future__ import annotations
 
 from statistics import mean
@@ -17,10 +16,6 @@ def _novo_pedido(evento: dict, estado: str) -> dict:
 
 
 def _pedidos_da_rodada(eventos: list[dict]) -> tuple[list[dict], list[dict]]:
-    """Pedidos na ordem de chegada e os eventos que pertencem a eles.
-
-    Tarefa aceita antes do início da rodada não entra: seus `started`/`finished` são da rodada anterior.
-    """
     aceitos: dict[str, dict] = {}
     pedidos: list[dict] = []
     da_rodada: list[dict] = []
@@ -57,7 +52,6 @@ def _completar(pedido: dict, metadados: dict, origem: dict, agora_wall: float) -
 
     espera = meta.get("queue_wait_s")
     if espera is None and pedido["estado"] != "recusado":
-        # Sem JSON ainda: mede pelos eventos; quem segue na fila conta até agora.
         espera = _diferenca(inicio or fim, recebido) if (inicio or fim) else agora_rel - pedido["t_recebido"]
     reconstrucao = meta.get("duration_s")
     if reconstrucao is None and inicio is not None:
@@ -100,7 +94,6 @@ def _cartoes(pedidos: list[dict], eventos: list[dict], fila_1s: list[tuple[float
     else:
         tempo_total, fim_wall = None, None
 
-    # Moda sobre amostras de 1 s da primeira chegada à última conclusão, como em monitor/medicao/indicadores.py.
     filas = [q for t, q in fila_1s if inicio_wall is not None and fim_wall is not None and inicio_wall <= t <= fim_wall]
     duracoes = [p["reconstrucao_s"] for p in pedidos if p["estado"] == "concluido" and p["reconstrucao_s"] is not None]
     esperas = [p["espera_s"] for p in pedidos if p["t_inicio"] is not None and p["espera_s"] is not None]
@@ -123,7 +116,6 @@ def _cartoes(pedidos: list[dict], eventos: list[dict], fila_1s: list[tuple[float
 
 def montar_estado(eventos: list[dict], metadados: dict[str, dict], fila_1s: list[tuple[float, int]],
                   agora_wall: float, limite_tabela: int = 20) -> dict:
-    """`fila_1s`: pares (epoch, queue_depth) lidos de /metrics uma vez por segundo."""
     pedidos, da_rodada = _pedidos_da_rodada(eventos)
     origem = pedidos[0]["recebido"] if pedidos else None
     pedidos = [_completar(p, metadados, origem, agora_wall) for p in pedidos]

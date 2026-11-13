@@ -1,4 +1,3 @@
-// Threads worker: rodam a reconstrução, gravam os arquivos e marcam a tarefa como done ou failed.
 #include "aplicacao/fila/fila.hpp"
 
 #include "aplicacao/relogio.hpp"
@@ -11,7 +10,6 @@
 
 void Fila::laco_worker() {
     std::unique_lock<std::mutex> trava(trava_);
-    // Sob a trava: limitar as threads da OpenBLAS também ajusta buffers globais dela.
     if (preparar_worker_) {
         preparar_worker_();
     }
@@ -34,7 +32,6 @@ void Fila::laco_worker() {
 Fila::Desfecho Fila::executar(ItemFila& item) {
     Tarefa tarefa;
     {
-        // Campos de identificação e início: lidos sob trava, porque consultas concorrem.
         const std::lock_guard<std::mutex> guarda(trava_);
         tarefa = *item.tarefa;
     }
@@ -70,7 +67,6 @@ void Fila::gravar_saidas(Tarefa& tarefa, const std::optional<Resultado>& resulta
         desfecho.conclusao.stop_reason = nome_do_motivo(resultado->motivo);
         desfecho.conclusao.residual_norms = resultado->residual_norms;
         try {
-            // O status só vira done depois dos arquivos: quem vê done já consegue baixar o resultado.
             resultados_.gravar_resultado(tarefa.job_id, *resultado, modelo);
         } catch (const std::exception& erro) {
             marcar_falha(desfecho, tarefa.job_id, "output_write_failed", erro.what());

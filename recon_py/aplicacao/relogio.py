@@ -1,4 +1,3 @@
-"""Hora UTC no formato dos campos `*_at` e de `t_wall`."""
 from __future__ import annotations
 
 from datetime import datetime, timezone

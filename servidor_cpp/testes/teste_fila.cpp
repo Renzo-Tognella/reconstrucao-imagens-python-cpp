@@ -35,7 +35,6 @@ public:
         pasta_ = std::filesystem::temp_directory_path() /
                  ("teste_fila_" + std::to_string(getpid()) + "_" + std::to_string(contador_++));
         std::filesystem::create_directories(pasta_);
-        // Valores pseudoaleatórios fixos: mantêm as 10 iterações do CGNR.
         std::vector<double> H(linhas * colunas);
         std::uint64_t estado = 88172645463325252ull;
         for (double& valor : H) {
@@ -114,7 +113,6 @@ CenarioFila cenario_de_teste(const ModeloTemporario& modelo) {
     return cenario;
 }
 
-// Mesma infraestrutura do servidor; o cenário só troca a fonte de memória.
 struct FilaDeTeste {
     ResultadosEmDisco resultados;
     EventosJsonl eventos;
@@ -190,8 +188,6 @@ void teste_H_ja_mapeada_nao_falha_na_hora() {
               "H já mapeada: falha ao vencer o prazo");
 }
 
-// A cabeça espera enquanto a outra tarefa roda. O prazo só pode começar quando running chega a zero:
-// mede a distância entre o fim de "longa" e a falha de "sem_memoria" nos t_mono de events.jsonl.
 void teste_prazo_de_memoria_so_conta_com_nada_em_execucao() {
     const ModeloTemporario modelo(4000, 2000);
     const CatalogoManifesto catalogo(modelo.pasta());
@@ -245,7 +241,7 @@ void teste_aquecer_mapeia_o_modelo() {
     verificar(m->mapeado(), "aquecer mapeia H");
 }
 
-}  // namespace
+}
 
 int main() {
     blas::configurar_threads(1);

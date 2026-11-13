@@ -1,4 +1,3 @@
-"""Converte o vetor reconstruído numa imagem PGM em tons de cinza."""
 from __future__ import annotations
 
 import numpy as np

@@ -1,4 +1,3 @@
-"""Etapa 3 do enunciado: mede tempo, memória e CPU de reconstruções repetidas, fora do servidor."""
 from __future__ import annotations
 
 import argparse
@@ -19,7 +18,7 @@ def _inteiro_positivo(texto: str) -> int:
 
 
 def ler_argumentos(argv: list[str] | None) -> argparse.Namespace:
-    leitor = argparse.ArgumentParser(prog="python -m recon_py.prototipo", description=__doc__)
+    leitor = argparse.ArgumentParser(prog="python -m recon_py.prototipo", description="Etapa 3: reconstruções repetidas sem servidor.")
     leitor.add_argument("--dados", type=Path, required=True)
     leitor.add_argument("--modelo", required=True)
     leitor.add_argument("--sinal", type=Path, required=True)

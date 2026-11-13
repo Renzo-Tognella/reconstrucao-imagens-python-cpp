@@ -1,4 +1,3 @@
-// Valores esperados obtidos de tests/referencia.py (NumPy puro) para estas mesmas matrizes.
 #include "dominio/algoritmos/reconstrucao.hpp"
 #include "dominio/imagem.hpp"
 #include "infraestrutura/arquivos.hpp"
@@ -20,8 +19,6 @@ namespace {
 void comparar(const std::vector<double>& obtido, const std::vector<double>& esperado, const std::string& nome) {
     verificar(obtido.size() == esperado.size(), nome + ": tamanho");
     for (std::size_t i = 0; i < obtido.size() && i < esperado.size(); ++i) {
-        // Mesma tolerância da conformidade: entre BLAS diferentes, a ordem de soma muda o arredondamento
-        // e 10 iterações em matriz mal condicionada amplificam isso até a ordem de 1e-9.
         const double limite = 1e-7 * std::max(1.0, std::fabs(esperado[i]));
         verificar(std::fabs(obtido[i] - esperado[i]) <= limite, nome + "[" + std::to_string(i) + "]");
     }
@@ -44,7 +41,6 @@ std::vector<double> sinal_diagonal() {
 }
 
 void teste_cgnr_para_por_tolerancia_em_sistema_sobredeterminado() {
-    // H = [[1,2],[3,4],[5,6]], armazenada por colunas.
     const std::vector<double> H{1, 3, 5, 2, 4, 6};
     const auto r = reconstruir(Algoritmo::cgnr, MatrizColunas{H.data(), 3, 2}, {1, 2, 4});
     verificar(r.iterations == 3, "cgnr 3x2: iterations");
@@ -140,7 +136,6 @@ void teste_tamanho_do_sinal_e_exigido() {
 }
 
 void teste_pgm_coluna_primeiro_com_valor_absoluto() {
-    // f[col*altura + lin]: duas colunas e duas linhas; o maior módulo é negativo.
     const std::string pgm = imagem_pgm({-1.0, 0.0, 0.5, 0.25}, 2, 2);
     const std::string cabecalho = "P5\n2 2\n255\n";
     verificar(pgm.substr(0, cabecalho.size()) == cabecalho, "pgm: cabeçalho");
@@ -171,7 +166,7 @@ void teste_escrita_atomica_nao_deixa_temporario_quando_falha() {
     std::filesystem::remove_all(pasta, ignorado);
 }
 
-}  // namespace
+}
 
 int main() {
     blas::configurar_threads(1);

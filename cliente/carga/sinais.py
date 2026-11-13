@@ -1,4 +1,3 @@
-"""Lê o sinal de um pedido em `dados/`, aplica o ganho quando sorteado e calcula o CRC do corpo enviado."""
 from __future__ import annotations
 
 import zlib

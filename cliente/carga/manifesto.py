@@ -1,4 +1,3 @@
-"""Sorteia uma vez a sequência de pedidos e grava o arquivo de carga usado pelas duas versões."""
 from __future__ import annotations
 
 import argparse
@@ -46,7 +45,6 @@ def _escolher_modelos(dados: Path, modelos: list[str] | None) -> dict:
 
 def _sortear_pedido(rng: np.random.Generator, modelos: dict, algoritmos: list[str], ganho: str,
                     intervalo_max_s: float) -> dict:
-    # A ordem dos sorteios faz parte do formato: mudá-la muda toda carga já gravada.
     nomes_modelos = sorted(modelos)
     nome_modelo = nomes_modelos[rng.integers(len(nomes_modelos))]
     sinais = sorted(modelos[nome_modelo]["sinais"])
@@ -70,11 +68,6 @@ def _crc_e_tamanho(dados: Path, modelos: dict, sorteio: dict, cache: dict[tuple[
 def gerar_carga(dados: Path, *, semente: int, clientes: int, sinais_por_cliente: int,
                 algoritmos: list[str] | None, intervalo_max_s: float, modelos: list[str] | None = None,
                 ganho: str = "sorteado") -> dict:
-    """Mesmos argumentos e mesmos dados produzem exatamente o mesmo dicionário.
-
-    `ganho` fixo ("sim" ou "nao") ainda consome o sorteio do ganho: modelo, sinal, algoritmo e atrasos
-    ficam iguais aos da carga sorteada com a mesma semente; só ganho, CRC e corpo mudam.
-    """
     algoritmos = _validar_algoritmos(algoritmos)
     if ganho not in MODOS_GANHO:
         raise ValueError(f"ganho deve ser {', '.join(MODOS_GANHO)}; recebido: {ganho}")
@@ -95,7 +88,6 @@ def gerar_carga(dados: Path, *, semente: int, clientes: int, sinais_por_cliente:
     parametros = {"clientes": clientes, "sinais_por_cliente": sinais_por_cliente,
                   "algoritmos": algoritmos, "intervalo_max_s": intervalo_max_s}
     if ganho != "sorteado":
-        # Só aparece quando fixado: cargas sorteadas continuam iguais byte a byte às já gravadas.
         parametros["ganho"] = ganho
     return {
         "versao_formato": 1,
@@ -115,7 +107,7 @@ def gravar_carga(carga: dict, saida: Path) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description="Sorteia a carga de pedidos e grava em JSON.")
     parser.add_argument("--semente", type=int, required=True)
     parser.add_argument("--clientes", type=int, required=True)
     parser.add_argument("--sinais-por-cliente", type=int, required=True)

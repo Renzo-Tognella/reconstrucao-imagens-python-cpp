@@ -1,4 +1,3 @@
-"""Dimensões de um modelo de reconstrução e onde está o arquivo da sua matriz H."""
 from __future__ import annotations
 
 from dataclasses import dataclass

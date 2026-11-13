@@ -1,5 +1,3 @@
-// O que a aplicação precisa saber de um modelo. A infraestrutura entrega a matriz H
-// (infraestrutura/matriz_mapeada.hpp) e o catálogo (infraestrutura/manifesto.hpp).
 #pragma once
 
 #include "dominio/algoritmos/produtos.hpp"
@@ -24,7 +22,6 @@ public:
     std::size_t altura() const { return altura_; }
 
     virtual bool mapeado() const = 0;
-    // Carrega na primeira chamada; as demais reutilizam a mesma matriz.
     virtual MatrizColunas matriz() const = 0;
 
 private:

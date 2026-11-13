@@ -71,7 +71,6 @@ def test_envios_nao_esperam_a_reconstrucao(dados, subir_stub, tmp_path):
 
 
 def test_post_lento_nao_atrasa_o_proximo_envio_do_mesmo_cliente(dados, subir_stub, tmp_path):
-    # Agenda aberta: sem isso, a lentidão do servidor seria escondida pela espera do cliente.
     stub = subir_stub(atraso_post_s=0.4)
     carga = nova_carga(dados, clientes=1, sinais=3)
     for indice, pedido in enumerate(carga["pedidos"]):
@@ -129,7 +128,6 @@ def test_baixa_imagem_vetor_e_metadados_e_gera_png_ampliado(dados, subir_stub, t
         assert png.format == "PNG"
         escala = png.width // 2
         assert escala > 1 and png.size == (2 * escala, 2 * escala)
-        # Vizinho mais próximo: o bloco ampliado mantém o valor exato do pixel original (i*7).
         assert png.getpixel((escala, 0)) == 7
         assert png.getpixel((2 * escala - 1, escala - 1)) == 7
 
@@ -192,7 +190,6 @@ def test_vigia_interrompe_e_registra_o_que_nao_foi_enviado(dados, subir_stub, tm
 
     def vigia():
         chamadas.append(1)
-        # Depois da margem inicial, para o primeiro pedido já ter saído.
         return "memória baixa" if len(chamadas) >= 8 else None
 
     resumo = rodar(carga, stub.url, dados, saida, vigia=vigia, intervalo_vigia_s=0.05)

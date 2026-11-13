@@ -1,4 +1,3 @@
-"""python -m monitor --servidor http://127.0.0.1:8000 --saida <pasta do servidor> [--porta 8050] [--pid N]"""
 from __future__ import annotations
 
 import argparse

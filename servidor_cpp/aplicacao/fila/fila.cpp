@@ -102,7 +102,7 @@ void Fila::parar_despacho() {
 
 void Fila::aguardar_fim() {
     if (!despachante_.joinable()) {
-        return;  // já esperou
+        return;
     }
     juntar_threads();
     const std::lock_guard<std::mutex> guarda(trava_);

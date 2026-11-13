@@ -71,7 +71,6 @@ std::string detalhe(const char* evento, const Tarefa* tarefa) {
     return "";
 }
 
-// Completa com espaços contando caracteres UTF-8, não bytes, para as colunas baterem com acentos.
 std::string completar(const std::string& texto, std::size_t largura) {
     std::size_t caracteres = 0;
     for (const unsigned char c : texto) {
@@ -89,7 +88,7 @@ std::string hora_local() {
     return texto;
 }
 
-}  // namespace
+}
 
 std::string linha_evento(const char* evento, const std::string& job_id, const Tarefa* tarefa,
                          std::size_t fila, std::size_t rodando) {
@@ -109,4 +108,4 @@ void escrever(const std::string& linha) {
     std::fflush(stdout);
 }
 
-}  // namespace log_terminal
+}

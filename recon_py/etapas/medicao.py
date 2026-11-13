@@ -1,4 +1,3 @@
-"""Medição de reconstruções repetidas, com as mesmas fontes de tempo e memória do protótipo C++."""
 from __future__ import annotations
 
 import json
@@ -16,7 +15,6 @@ from recon_py.dominio.modelo import Modelo
 from recon_py.infraestrutura.matriz import carregar_manifesto, mapear_h
 
 BYTES_POR_MIB = 1024 * 1024
-# ru_maxrss vem em bytes no macOS e em KiB no Linux.
 BYTES_POR_UNIDADE_RSS = 1 if sys.platform == "darwin" else 1024
 
 

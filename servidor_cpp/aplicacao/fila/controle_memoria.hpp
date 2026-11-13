@@ -1,4 +1,3 @@
-// Decide se a tarefa da frente da fila pode começar sem faltar memória.
 #pragma once
 
 #include "aplicacao/portas/modelos.hpp"
@@ -8,12 +7,10 @@
 #include <functional>
 #include <optional>
 
-// H fica de fora: é mapeamento somente leitura de arquivo, e o sistema recupera essas páginas sem swap.
 std::uint64_t custo_em_bytes(const Modelo& modelo);
 
 enum class DecisaoMemoria { iniciar, aguardar, falhar };
 
-// Sem trava própria: a Fila chama avaliar() e reservar() sob a mesma trava (regra 4 do protocolo).
 class ControleMemoria {
 public:
     ControleMemoria(std::function<std::uint64_t()> memoria_disponivel, std::uint64_t memoria_fisica,

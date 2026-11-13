@@ -1,4 +1,3 @@
-"""GET /jobs/{job_id}/image e /vector: devolvem a imagem PGM e o vetor f64 de uma tarefa concluída."""
 from __future__ import annotations
 
 from fastapi import APIRouter

@@ -1,4 +1,3 @@
-"""Acrescenta uma linha JSON por evento da fila em `saida/events.jsonl` e mostra o evento no terminal."""
 from __future__ import annotations
 
 import json
@@ -17,7 +16,6 @@ class RegistroDeEventos:
     def registrar(self, registro: dict, tarefa: dict | None = None) -> None:
         log_terminal.escrever(log_terminal.linha_evento(
             registro["event"], registro["job_id"], tarefa, registro["queue_depth"], registro["running"]))
-        # Falha de disco aqui não pode parar a fila: o evento se perde e o erro vai para o stderr.
         try:
             self._arquivo.write(json.dumps(registro) + "\n")
         except OSError as erro:

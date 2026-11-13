@@ -1,4 +1,3 @@
-"""CGNE do contrato, operação por operação, sobre uma `H` compartilhada e somente leitura."""
 from __future__ import annotations
 
 import numpy as np

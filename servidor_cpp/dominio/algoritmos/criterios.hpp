@@ -1,4 +1,3 @@
-// Critérios de parada do protocolo e a checagem de valores finitos a cada passo.
 #pragma once
 
 #include "dominio/algoritmos/resultado.hpp"

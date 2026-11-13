@@ -1,4 +1,3 @@
-"""Lê `dados/manifesto.json` e mapeia o arquivo de H na memória, sem copiá-lo."""
 from __future__ import annotations
 
 import json

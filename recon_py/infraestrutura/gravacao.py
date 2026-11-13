@@ -1,4 +1,3 @@
-"""Grava os resultados em `saida/jobs/`. Quem lê nunca vê um arquivo pela metade."""
 from __future__ import annotations
 
 from pathlib import Path

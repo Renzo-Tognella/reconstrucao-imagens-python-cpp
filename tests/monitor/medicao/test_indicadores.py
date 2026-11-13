@@ -6,7 +6,6 @@ from tests.cliente.apoio import evento
 
 
 def test_media_temporal_pondera_pelo_tempo_entre_eventos():
-    # Fila 1 por 2 s, 2 por 1 s, 1 por 4 s, 0 por 1 s: (2 + 2 + 4 + 0) / 8 = 1.0
     eventos = [
         evento(0, "accepted", "a", 1), evento(2, "accepted", "b", 2), evento(3, "started", "a", 1, 1),
         evento(7, "finished", "a", 1), evento(7, "started", "b", 0, 1), evento(8, "finished", "b", 0),

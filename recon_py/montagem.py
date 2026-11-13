@@ -1,4 +1,3 @@
-"""Liga as camadas: entrega à fila o disco, a memória e a matriz H de verdade."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -13,7 +12,6 @@ from recon_py.infraestrutura.memoria import memoria_disponivel, memoria_fisica_t
 
 
 def montar_recursos(saida: Path) -> RecursosExternos:
-    # PastaDeResultados cria `saida/`; por isso vem antes de abrir events.jsonl.
     resultados = PastaDeResultados(saida)
     return RecursosExternos(
         abrir_h=mapear_h,

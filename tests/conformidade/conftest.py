@@ -1,4 +1,3 @@
-"""Sobe cada servidor real. IMPLS=python,cpp escolhe quais rodar; um servidor ausente é falha, não pulo."""
 from __future__ import annotations
 
 import os

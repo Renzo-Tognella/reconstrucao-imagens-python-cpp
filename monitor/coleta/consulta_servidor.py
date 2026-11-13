@@ -1,4 +1,3 @@
-"""Consultas HTTP ao servidor de reconstrução: /metrics, /info e /jobs/{id}."""
 from __future__ import annotations
 
 import httpx

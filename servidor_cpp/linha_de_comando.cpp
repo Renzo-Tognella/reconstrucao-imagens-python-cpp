@@ -6,8 +6,6 @@
 
 namespace {
 
-// Limites altos o bastante para qualquer uso e baixos o bastante para somas e
-// multiplicações em bytes não estourarem 64 bits.
 constexpr std::uint64_t MAXIMO_BYTES = 1ull << 60;
 constexpr std::uint64_t MAXIMO_MB = 1ull << 40;
 constexpr std::uint64_t MAXIMO_ESPERA_S = 1ull << 40;
@@ -67,7 +65,7 @@ void aplicar_opcao(Opcoes& opcoes, const std::string& nome, const std::string& v
     }
 }
 
-}  // namespace
+}
 
 Opcoes ler_opcoes(int argc, char** argv) {
     Opcoes opcoes;

@@ -8,15 +8,11 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-# O SciPy dos wheels de macOS usa Accelerate: a comparação com Python precisa rodar
-# com a mesma BLAS e também com a OpenBLAS. Cada backend fica em seu diretório de build.
 set(BLAS_BACKEND openblas CACHE STRING "BLAS usada: openblas ou accelerate")
 set_property(CACHE BLAS_BACKEND PROPERTY STRINGS openblas accelerate)
 
 add_library(blas_escolhida INTERFACE)
 if(BLAS_BACKEND STREQUAL "openblas")
-  # Procura openblas_config.h, não cblas.h: no macOS o cblas.h do vecLib viria antes e não
-  # declara openblas_set_num_threads.
   find_path(OPENBLAS_INCLUDE openblas_config.h
     HINTS /opt/homebrew/opt/openblas /usr/local/opt/openblas
     PATH_SUFFIXES include include/openblas include/x86_64-linux-gnu/openblas-pthread
@@ -64,7 +60,6 @@ target_compile_options(opcoes_comuns INTERFACE -O3 -Wall -Wextra)
 target_include_directories(opcoes_comuns INTERFACE ${CMAKE_SOURCE_DIR}/servidor_cpp)
 target_link_libraries(opcoes_comuns INTERFACE blas_escolhida Threads::Threads nlohmann_json::nlohmann_json)
 
-# Uma biblioteca por camada, cada uma ligada só às camadas de dentro: domínio <- aplicação <- infraestrutura.
 add_library(camada_dominio STATIC
   servidor_cpp/dominio/imagem.cpp
   servidor_cpp/dominio/algoritmos/cgne.cpp
@@ -103,13 +98,11 @@ add_executable(servidor_cpp
   servidor_cpp/http/rotas/enviar_sinal.cpp
   servidor_cpp/http/rotas/metricas.cpp)
 target_link_libraries(servidor_cpp PRIVATE camada_infraestrutura httplib::httplib)
-# Igual ao padrão do uvicorn. O 5 da biblioteca distorce rajadas e testes de saturação no macOS.
 target_compile_definitions(servidor_cpp PRIVATE CPPHTTPLIB_LISTEN_BACKLOG=2048)
 
 add_executable(prototipo_cpp servidor_cpp/etapas/prototipo.cpp)
 target_link_libraries(prototipo_cpp PRIVATE camada_infraestrutura)
 
-# Dados da etapa 2 do enunciado, extraídos no build.
 set(DADOS_ZIP "${CMAKE_SOURCE_DIR}/dados-fornecidos/Dados.zip")
 set(DADOS_ETAPA2 "${CMAKE_BINARY_DIR}/dados_etapa2")
 if(NOT EXISTS "${DADOS_ZIP}")

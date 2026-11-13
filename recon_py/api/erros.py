@@ -1,4 +1,3 @@
-"""Formato `{"error", "detail"}` de toda resposta de erro, inclusive rota inexistente e falha interna."""
 from __future__ import annotations
 
 from fastapi import FastAPI, Request

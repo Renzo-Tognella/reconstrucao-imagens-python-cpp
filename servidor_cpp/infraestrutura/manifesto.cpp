@@ -26,7 +26,7 @@ std::unique_ptr<ModeloMapeado> modelo_do_manifesto(const std::filesystem::path& 
     return std::make_unique<ModeloMapeado>(nome, linhas, colunas, largura, altura, matriz);
 }
 
-}  // namespace
+}
 
 CatalogoManifesto::CatalogoManifesto(const std::filesystem::path& dados) {
     const auto caminho = dados / "manifesto.json";

@@ -5,7 +5,6 @@ from cliente.carga.ganho import aplicar_ganho, fatores_ganho
 
 
 def formula_em_laco(g, S, N):
-    # Transcrição direta do enunciado: para c e l, g[c*S + (l-1)] *= 100 + (1/20) * l * sqrt(l)
     saida = np.array(g, dtype=float)
     for c in range(N):
         for l in range(1, S + 1):

@@ -25,7 +25,7 @@ nlohmann::ordered_json opcional_json(const std::optional<T>& valor) {
     return valor.has_value() ? nlohmann::ordered_json(*valor) : nlohmann::ordered_json(nullptr);
 }
 
-}  // namespace
+}
 
 std::uint32_t crc32(const void* dados, std::size_t tamanho) {
     const auto* bytes = static_cast<const unsigned char*>(dados);

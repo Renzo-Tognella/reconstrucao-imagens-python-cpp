@@ -1,4 +1,3 @@
-"""Fila FIFO do contrato: um despachante escolhe a próxima tarefa e um pool de workers reconstrói."""
 from __future__ import annotations
 
 import json
@@ -36,11 +35,11 @@ REAVALIACAO_MEMORIA_S = 0.1
 
 
 class Conflito(Exception):
-    """Mesmo job_id com corpo ou metadados diferentes."""
+    pass
 
 
 class FilaCheia(Exception):
-    """Limite de --fila-max ou --fila-max-bytes atingido."""
+    pass
 
 
 @dataclass(frozen=True)
@@ -90,7 +89,6 @@ class Fila:
         self._eventos.fechar()
 
     def submeter(self, pedido: Pedido) -> tuple[bool, str]:
-        """Devolve (nova, status). Reenvio idêntico não cria tarefa."""
         with self._trava:
             existente = self._tarefas.get(pedido.job_id)
             if existente is not None:
@@ -153,7 +151,6 @@ class Fila:
                 self._falhar(sem_memoria, INSUFFICIENT_MEMORY)
 
     def _avaliar_cabeca(self) -> Tarefa | None:
-        """Inicia a cabeça se couber. Devolve a cabeça se ela precisa falhar por falta de memória."""
         modelo = self._modelos[self._fila[0].corpo["model"]]
         if self._memoria.h_nunca_cabera(modelo, modelo.nome in self._mapas):
             return self._retirar_cabeca()
@@ -232,7 +229,6 @@ class Fila:
 
     def _falhar(self, tarefa: Tarefa, codigo: str, medidas: dict | None = None) -> None:
         with self._trava:
-            # Um erro depois da conclusão não pode reescrever o resultado nem contar a tarefa duas vezes.
             if tarefa.corpo["status"] in TERMINAIS:
                 return
         finais = {"finished_at": agora_iso()} | (medidas or {}) | {"status": "failed", "error": codigo}
@@ -243,7 +239,6 @@ class Fila:
         self._finalizar(tarefa, finais, "failed", "failed")
 
     def _finalizar(self, tarefa: Tarefa, finais: dict, evento: str, contador: str) -> None:
-        # O status só muda aqui, depois da gravação: quem lê `done` encontra os arquivos prontos.
         with self._trava:
             if tarefa.corpo["status"] == "running":
                 self._em_execucao -= 1

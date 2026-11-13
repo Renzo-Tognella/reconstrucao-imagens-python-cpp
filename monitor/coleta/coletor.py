@@ -1,4 +1,3 @@
-"""Laço de coleta: a cada ciclo consulta o servidor, lê eventos novos e recursos, e publica um retrato pronto."""
 from __future__ import annotations
 
 import json
@@ -21,7 +20,7 @@ from monitor.coleta.recursos import AmostradorRecursos
 from monitor.estado import montar_estado
 
 INTERVALO_S = 0.5
-PONTOS_NA_SERIE = 1200  # 10 min a 0,5 s
+PONTOS_NA_SERIE = 1200
 CONSULTAS_POR_CICLO = 20
 BUSCA_PID_A_CADA_S = 2.0
 FOLGA_INICIO_SERVIDOR_S = 1.0
@@ -57,7 +56,6 @@ class Coletor:
         if saida is not None:
             self._trocar_saida(saida.resolve())
 
-    # Controle -----------------------------------------------------------------------------------------------
 
     def iniciar(self) -> None:
         self._thread = threading.Thread(target=self._laco, name="coletor", daemon=True)
@@ -70,7 +68,6 @@ class Coletor:
         self._consulta.fechar()
 
     def nova_rodada(self) -> None:
-        # Só registra o pedido: quem muda o estado é o laço, sem disputar trava com a API.
         self._pedido_nova_rodada = time.time()
 
     def _laco(self) -> None:
@@ -82,7 +79,6 @@ class Coletor:
                 traceback.print_exc(file=sys.stderr)
             self._parar.wait(max(0.0, self.intervalo_s - (time.monotonic() - inicio)))
 
-    # Um ciclo -----------------------------------------------------------------------------------------------
 
     def ciclo(self) -> None:
         agora = time.time()
@@ -112,7 +108,6 @@ class Coletor:
         return anterior is not None and metrics["uptime_s"] + INTERVALO_S < anterior
 
     def _atualizar_processo(self, reiniciou: bool, agora: float) -> bool:
-        """Acha o PID se ele sumiu. Devolve True se o servidor agora é outro processo."""
         if self._recursos.processo_vivo() and not reiniciou:
             return False
         if agora - self._ultima_busca_pid < BUSCA_PID_A_CADA_S and not reiniciou:

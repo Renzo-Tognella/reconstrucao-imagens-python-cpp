@@ -1,4 +1,3 @@
-"""CGNR do contrato, operação por operação, sobre uma `H` compartilhada e somente leitura."""
 from __future__ import annotations
 
 import numpy as np
@@ -47,7 +46,6 @@ def cgnr(H: np.ndarray, g: np.ndarray) -> Resultado:
         if zz2 == 0:
             return concluir(f, normas, i, ZERO_RESIDUAL)
         beta = exigir_finito(zz2 / zz, "beta")
-        # p = z + beta p sem vetor temporário: z recebe o resultado e os dois buffers trocam de papel.
         daxpy(p, z, a=beta)
         p, z = z, p
         zz = zz2

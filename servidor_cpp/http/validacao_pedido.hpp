@@ -1,4 +1,3 @@
-// Confere os parâmetros e o corpo de POST /jobs e monta o pedido da tarefa, ou diz o motivo da recusa.
 #pragma once
 
 #include "aplicacao/fila/tarefa.hpp"

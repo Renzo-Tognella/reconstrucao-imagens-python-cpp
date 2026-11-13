@@ -1,11 +1,9 @@
-// Contadores da fila e o corpo JSON de GET /metrics.
 #pragma once
 
 #include <cstddef>
 #include <cstdint>
 #include <nlohmann/json.hpp>
 
-// Sem trava própria: a Fila só mexe aqui segurando a trava dela.
 struct Contadores {
     std::uint64_t aceitas = 0;
     std::uint64_t concluidas = 0;

@@ -1,4 +1,3 @@
-// Ponto de entrada: lê a linha de comando, liga cada camada à infraestrutura e roda até SIGTERM.
 #include "aplicacao/fila/fila.hpp"
 #include "aplicacao/relogio.hpp"
 #include "http/servidor_http.hpp"
@@ -29,7 +28,6 @@ static_assert(std::atomic<bool>::is_always_lock_free, "o handler de sinal só po
 
 extern "C" void ao_receber_sinal(int) { pedido_encerramento.store(true); }
 
-// Valida todos antes de aquecer o primeiro: nome errado falha sem custo de leitura.
 double aquecer_modelos(const CatalogoModelos& catalogo, const std::vector<std::string>& nomes) {
     std::vector<const Modelo*> modelos;
     for (const std::string& nome : nomes) {
@@ -86,14 +84,13 @@ void anunciar(const Opcoes& opcoes, const CatalogoModelos& catalogo, double aque
     }
 }
 
-// O handler só marca o pedido; parar o servidor aloca e espera, então acontece aqui.
 void esperar_encerramento() {
     while (!pedido_encerramento.load() && !escuta_terminou.load()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 }
 
-}  // namespace
+}
 
 int main(int argc, char** argv) {
     try {

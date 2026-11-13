@@ -1,4 +1,3 @@
-// GET /jobs/{id}/image (PGM) e GET /jobs/{id}/vector (f em float64): só com a tarefa em done.
 #include "http/erros.hpp"
 #include "http/rotas/rotas.hpp"
 
@@ -22,7 +21,7 @@ void baixar_resultado(const httplib::Request& req, httplib::Response& res, const
     }
 }
 
-}  // namespace
+}
 
 void registrar_download_de_resultado(httplib::Server& servidor, const Fila& fila) {
     servidor.Get("/jobs/:id/image", [&fila](const httplib::Request& req, httplib::Response& res) {

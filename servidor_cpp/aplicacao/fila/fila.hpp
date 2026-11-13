@@ -1,5 +1,3 @@
-// Fila de reconstrução. fila.cpp recebe e consulta pedidos, despachante.cpp decide quando a
-// próxima tarefa começa e execucao.cpp roda a reconstrução nos workers.
 #pragma once
 
 #include "aplicacao/fila/controle_memoria.hpp"
@@ -32,15 +30,12 @@ struct ConfiguracaoFila {
     double espera_mem_max_s = 60.0;
 };
 
-// O que a fila usa do mundo de fora. main.cpp liga cada item à infraestrutura; os testes trocam
-// a fonte de memória para provocar falta de memória.
 struct DependenciasFila {
     const CatalogoModelos& catalogo;
     const ArmazemResultados& resultados;
     RegistroEventos& eventos;
     std::function<std::uint64_t()> memoria_disponivel;
     std::uint64_t memoria_fisica;
-    // Roda uma vez em cada worker, antes do primeiro cálculo.
     std::function<void()> preparar_worker;
 };
 
@@ -48,7 +43,7 @@ enum class DesfechoEnvio { aceito, repetido, conflito, fila_cheia };
 
 struct RespostaEnvio {
     DesfechoEnvio desfecho;
-    EstadoTarefa estado;  // só faz sentido em aceito e repetido
+    EstadoTarefa estado;
 };
 
 class Fila {
@@ -64,13 +59,10 @@ public:
     nlohmann::ordered_json metricas() const;
     std::string ler_resultado(const std::string& job_id, const char* extensao) const;
 
-    // Nenhuma tarefa nova inicia depois disso; as que rodam terminam normalmente.
     void parar_despacho();
-    // Exige parar_despacho antes.
     void aguardar_fim();
 
 private:
-    // O sinal anda com a tarefa até o worker e vira o resíduo r, então não pesa no registro.
     struct ItemFila {
         Tarefa* tarefa;
         const Modelo* modelo;
@@ -89,14 +81,12 @@ private:
 
     enum class DecisaoCabeca { aguardar_aviso, aguardar_memoria, iniciar, falhar_sem_memoria };
 
-    // despachante.cpp
     void laco_despachante();
     DecisaoCabeca avaliar_cabeca();
     ItemFila retirar_cabeca();
     void iniciar_cabeca();
     void falhar_cabeca_sem_memoria(std::unique_lock<std::mutex>& trava);
 
-    // execucao.cpp
     void laco_worker();
     Desfecho executar(ItemFila& item);
     std::optional<Resultado> reconstruir_item(ItemFila& item, const Tarefa& tarefa, Desfecho& desfecho);
@@ -107,7 +97,6 @@ private:
     static void aplicar(Tarefa& tarefa, const Desfecho& desfecho);
     void encerrar_execucao(Tarefa& tarefa, const Desfecho& desfecho, std::uint64_t custo);
 
-    // fila.cpp
     void registrar_evento(const char* evento, const std::string& job_id);
     void juntar_threads();
 

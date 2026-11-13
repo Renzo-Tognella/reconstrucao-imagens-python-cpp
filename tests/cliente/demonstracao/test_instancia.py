@@ -43,7 +43,6 @@ def rodar(caminho, numero, url, dados, saida, **opcoes):
 
 
 def linhas_de_imagem(texto: str) -> list[str]:
-    """Linhas da tabela IMAGENS com tempo de reconstrução (as imagens prontas)."""
     depois = texto.split("IMAGENS", 1)[1].splitlines()
     return [l for l in depois if re.search(r"\d+/\d+\s+[\d,]+ s\s+[\d,]+ s", l)]
 
@@ -51,8 +50,6 @@ def linhas_de_imagem(texto: str) -> list[str]:
 def envios(saida: Path) -> list[dict]:
     return [json.loads(l) for l in (saida / "cliente" / "envios.jsonl").read_text().splitlines()]
 
-
-# Filtro do cliente N
 
 def test_filtra_so_os_pedidos_do_cliente_n_na_ordem(dados):
     carga = nova_carga(dados, clientes=3, sinais=4)
@@ -88,8 +85,6 @@ def test_crc_divergente_nao_envia_nada(dados, subir_stub, tmp_path):
     assert stub.estado.posts_recebidos == []
 
 
-# Agenda relativa ao início de cada processo
-
 def test_agenda_conta_do_inicio_de_cada_instancia(dados, subir_stub, tmp_path):
     stub = subir_stub()
     caminho = gravar(nova_carga(dados, intervalo=0.3), tmp_path)
@@ -101,17 +96,13 @@ def test_agenda_conta_do_inicio_de_cada_instancia(dados, subir_stub, tmp_path):
         registros = envios(saida)
         assert len(registros) == 3
         for registro in registros:
-            # Instante real do envio, medido do t0 desta instância, bate com o planejado na carga.
             relativo = registro["t_envio_wall"] - resultado["resumo"]["t0_wall"]
             assert relativo == pytest.approx(registro["planejado_s"], abs=0.1)
             assert 0 <= registro["atraso_s"] < 0.1
 
 
-# Formatação das linhas
-
 PEDIDO = {"job_id": "c001-s0002", "client_id": "cliente-001", "sinal": "g2", "modelo": "30x30", "ganho": True,
           "algoritmo": "cgne", "instante_planejado_s": 1.5}
-# 2026-11-12 12:34:56.789 no fuso local do teste.
 INSTANTE = time.mktime((2026, 11, 12, 12, 34, 56, 0, 0, -1)) + 0.789
 
 
@@ -209,8 +200,6 @@ def test_deteccao_de_cor():
     assert cor_ativa("nao", Tty(), {"TERM": "xterm"}) is False
 
 
-# Fluxo completo com o stub
-
 def test_mesma_carga_duas_vezes_no_mesmo_servidor_reconstroi_de_novo(dados, subir_stub, tmp_path):
     stub = subir_stub(duracao_s=0.05)
     caminho = gravar(nova_carga(dados), tmp_path)
@@ -233,7 +222,6 @@ def test_terminal_relatorio_e_registros_com_stub(dados, subir_stub, tmp_path):
     assert sum("aceito (202)" in l for l in linhas) == 3
     assert len(linhas_de_imagem(texto)) == 3
     assert any("consulta" in l and "3 de 3 prontas" in l for l in linhas)
-    # Todos os envios aparecem antes da tabela de imagens.
     assert max(i for i, l in enumerate(linhas) if "aceito (202)" in l) < linhas.index("IMAGENS")
     assert "Os 3 envios terminaram" in texto
     assert re.search(r"Imagens prontas\s+3 de 3", texto) and not ANSI.search(texto)
@@ -312,7 +300,7 @@ def test_tres_terminais_com_servidor_python_real(tmp_path):
                 [sys.executable, "-m", "cliente.instancia", "--carga", str(caminho), "--cliente", str(numero),
                  "--servidor", url, "--saida", str(tmp_path / f"c{numero}"), "--cor", "nao"],
                 cwd=RAIZ, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True))
-            time.sleep(0.4)  # terminais abertos em momentos diferentes
+            time.sleep(0.4)
         saidas = [c.communicate(timeout=180)[0] for c in clientes]
         for numero, (cliente, texto) in enumerate(zip(clientes, saidas), start=1):
             assert cliente.returncode == 0, texto

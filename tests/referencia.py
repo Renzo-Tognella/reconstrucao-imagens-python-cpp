@@ -1,4 +1,3 @@
-"""Implementação de referência só com NumPy puro, usada para conferir os dois servidores."""
 from __future__ import annotations
 
 import json

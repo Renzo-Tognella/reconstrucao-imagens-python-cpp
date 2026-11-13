@@ -1,4 +1,3 @@
-// Thread despachante: olha a tarefa da frente da fila e decide se ela começa, espera ou falha.
 #include "aplicacao/fila/fila.hpp"
 
 #include "aplicacao/relogio.hpp"
@@ -10,7 +9,7 @@ namespace {
 
 constexpr auto INTERVALO_MEMORIA = std::chrono::milliseconds(100);
 
-}  // namespace
+}
 
 void Fila::laco_despachante() {
     std::unique_lock<std::mutex> trava(trava_);

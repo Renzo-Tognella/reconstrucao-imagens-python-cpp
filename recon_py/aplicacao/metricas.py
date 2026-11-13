@@ -1,4 +1,3 @@
-"""Contadores do servidor e o corpo de `GET /metrics`."""
 from __future__ import annotations
 
 import time

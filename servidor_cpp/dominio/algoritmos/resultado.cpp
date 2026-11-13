@@ -13,7 +13,6 @@ const char* nome_do_motivo(MotivoParada motivo) {
     return "max_iterations";
 }
 
-// alpha e p finitos ainda podem estourar a soma acumulada em f.
 Resultado concluir(std::vector<double> f, std::vector<double> normas, int iteracoes, MotivoParada motivo) {
     for (const double valor : f) {
         exigir_finito(valor, "f");

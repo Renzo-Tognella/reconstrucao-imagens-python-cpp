@@ -1,4 +1,3 @@
-// Linha do tempo das tarefas em <saida>/events.jsonl, um JSON por linha, e uma linha legível no terminal.
 #pragma once
 
 #include "aplicacao/portas/eventos.hpp"

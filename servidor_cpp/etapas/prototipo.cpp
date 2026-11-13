@@ -1,4 +1,3 @@
-// Etapa 3 do enunciado: reconstrução direta, sem servidor. Uma linha JSON por repetição.
 #include "aplicacao/relogio.hpp"
 #include "dominio/algoritmos/reconstrucao.hpp"
 #include "dominio/imagem.hpp"
@@ -69,7 +68,7 @@ Argumentos ler_argumentos(int argc, char** argv) {
     return args;
 }
 
-}  // namespace
+}
 
 int main(int argc, char** argv) {
     try {

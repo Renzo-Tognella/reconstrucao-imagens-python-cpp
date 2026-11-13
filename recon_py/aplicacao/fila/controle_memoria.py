@@ -1,4 +1,3 @@
-"""Decide se a tarefa da frente cabe na RAM, quanto ela reserva e quando desistir de esperar."""
 from __future__ import annotations
 
 import time
@@ -12,8 +11,6 @@ def custo_bytes(modelo: Modelo) -> int:
 
 
 class ControleDeMemoria:
-    """Quem chama segura a trava da fila: nada aqui é protegido por conta própria."""
-
     def __init__(
         self,
         reserva_bytes: int,
@@ -37,9 +34,7 @@ class ControleDeMemoria:
         return self._memoria_livre() - self._reservado >= custo + self._reserva_bytes
 
     def esperar(self, em_execucao: int) -> bool:
-        """Marca a espera por memória. Devolve True quando o prazo acabou e a tarefa deve falhar."""
         self.aguardando = True
-        # Enquanto algo roda, a memória ainda pode voltar: só conta o tempo contínuo sem nada em execução.
         if em_execucao > 0:
             self._parada_desde = None
             return False

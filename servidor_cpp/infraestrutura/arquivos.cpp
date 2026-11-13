@@ -7,7 +7,6 @@
 
 static_assert(__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__, "Os arquivos .f64 são little-endian e lidos sem conversão");
 
-// Temporário + rename: quem lê o arquivo nunca vê uma escrita pela metade.
 void escrever_atomico(const std::filesystem::path& destino, const char* dados, std::size_t tamanho) {
     std::filesystem::path temporario = destino;
     temporario += ".tmp";

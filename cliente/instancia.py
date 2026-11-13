@@ -1,4 +1,3 @@
-"""Mantém `python -m cliente.instancia` funcionando; o código está em `cliente/demonstracao/instancia.py`."""
 from __future__ import annotations
 
 import sys

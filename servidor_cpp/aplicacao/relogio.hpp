@@ -1,4 +1,3 @@
-// Horários usados nos campos de tempo das tarefas e dos eventos.
 #pragma once
 
 #include <chrono>
@@ -13,7 +12,6 @@ inline double segundos_monotonicos() {
     return std::chrono::duration<double>(agora).count();
 }
 
-// ISO-8601 em UTC com milissegundos e sufixo Z, o formato que o cliente espera.
 inline std::string agora_iso() {
     using namespace std::chrono;
     const auto agora = system_clock::now();
@@ -28,4 +26,4 @@ inline std::string agora_iso() {
     return texto;
 }
 
-}  // namespace relogio
+}

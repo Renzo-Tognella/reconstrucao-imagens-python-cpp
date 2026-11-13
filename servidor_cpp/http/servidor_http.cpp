@@ -12,12 +12,8 @@
 
 namespace {
 
-// Limitado de propósito: o trabalho pesado fica no pool de reconstrução, e estes threads só
-// recebem corpo e respondem consultas.
 constexpr std::size_t THREADS_HTTP = 32;
 constexpr std::size_t PEDIDOS_EM_ESPERA = 256;
-// Conexão ociosa e conexão muito longa devolvem o thread ao pool: sem isso, clientes com
-// keep-alive ocupariam todo o pool e os demais nunca seriam atendidos.
 constexpr int KEEP_ALIVE_S = 2;
 constexpr std::size_t KEEP_ALIVE_MAX_PEDIDOS = 100;
 constexpr int TIMEOUT_LEITURA_ESCRITA_S = 5;
@@ -31,14 +27,13 @@ void configurar_conexoes(httplib::Server& servidor, std::size_t maior_linhas) {
     servidor.set_read_timeout(TIMEOUT_LEITURA_ESCRITA_S);
     servidor.set_write_timeout(TIMEOUT_LEITURA_ESCRITA_S);
     servidor.set_tcp_nodelay(true);
-    // O padrão da biblioteca usa SO_REUSEPORT, que deixaria dois servidores dividirem a porta em silêncio.
     servidor.set_socket_options([](socket_t soquete) {
         const int ligado = 1;
         setsockopt(soquete, SOL_SOCKET, SO_REUSEADDR, &ligado, sizeof ligado);
     });
 }
 
-}  // namespace
+}
 
 struct ServidorHttp::Implementacao {
     const InfoServidor info;
@@ -69,7 +64,6 @@ void ServidorHttp::ligar(int porta) {
 void ServidorHttp::escutar() { impl_->servidor.listen_after_bind(); }
 
 void ServidorHttp::parar() {
-    // stop() antes de o laço de escuta começar seria ignorado e o servidor nunca sairia.
     impl_->servidor.wait_until_ready();
     impl_->servidor.stop();
 }

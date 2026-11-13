@@ -62,7 +62,6 @@ def test_info_reporta_blas_da_configuracao_do_scipy(novo_servidor):
 
 
 def test_sigterm_com_fila_nao_vazia_encerra_limpo_sem_iniciar_novas(novo_servidor, sinal):
-    # Com ganho cada tarefa faz 10 iterações, então a fila não esvazia durante os envios.
     modelo, _ = ref.carregar_modelo()
     corpo = ref.ganho(sinal, modelo["S"], modelo["N"]).tobytes()
     s = novo_servidor(workers=1)

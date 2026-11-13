@@ -1,4 +1,3 @@
-"""Dados sintéticos pequenos, no formato do manifesto real, para os testes do cliente."""
 from __future__ import annotations
 
 import json
@@ -19,7 +18,6 @@ COLUNAS_RECURSOS = [
 
 
 def binario_stub(pasta: Path, *extras: str, codigo: str | None = None) -> Path:
-    """Executável com a linha de comando do protocolo, no lugar do binário C++."""
     caminho = pasta / "servidor_falso.sh"
     if codigo is None:
         conteudo = f'#!/bin/sh\ncd "{RAIZ}" && exec "{sys.executable}" "{STUB}" "$@" {" ".join(extras)}\n'
@@ -31,7 +29,6 @@ def binario_stub(pasta: Path, *extras: str, codigo: str | None = None) -> Path:
 
 
 def criar_dados(raiz: Path, modelos: dict[str, tuple[int, int, int, int]] | None = None) -> Path:
-    """`modelos` mapeia nome para (S, N, largura, altura); cria sinais g1 e g2 por modelo."""
     modelos = modelos or {"30x30": (4, 3, 2, 2)}
     manifesto: dict = {"modelos": {}}
     for nome, (S, N, largura, altura) in modelos.items():
@@ -62,7 +59,6 @@ def criar_execucao(pasta: Path, *, impl: str = "python", workers: int = 1, blas_
                    envios: list[dict] | None = None, desfechos: list[dict] | None = None,
                    atende_minimo: bool = True, estado: str = "concluida", planejados: list[float] | None = None,
                    aquecimento_s: float | None = None, aquecer: list[str] | None = None) -> Path:
-    """Monta uma execução no formato que o cliente grava, sem servidor."""
     (pasta / "servidor" / "jobs").mkdir(parents=True)
     (pasta / "cliente" / "jobs").mkdir(parents=True)
     (pasta / "execucao.json").write_text(json.dumps({

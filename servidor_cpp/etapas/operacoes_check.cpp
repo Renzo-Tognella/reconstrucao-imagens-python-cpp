@@ -1,4 +1,3 @@
-// Etapa 2 do enunciado: MN, aM e Ma com BLAS, conferidos contra os gabaritos MN.csv e aM.csv.
 #include "infraestrutura/blas.hpp"
 
 #include <algorithm>
@@ -14,7 +13,6 @@
 
 namespace {
 
-// Matriz lida de CSV, guardada por colunas para o CblasColMajor.
 struct Tabela {
     int linhas = 0;
     int colunas = 0;
@@ -79,7 +77,7 @@ double maior_diferenca(const std::vector<double>& x, const std::vector<double>& 
     return maior;
 }
 
-}  // namespace
+}
 
 int main(int argc, char** argv) {
     try {
@@ -98,17 +96,13 @@ int main(int argc, char** argv) {
         cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, M.dados.data(), n, N.dados.data(), n, 0.0,
                     MN.data(), n);
 
-        // a é vetor linha: aM = (Mᵀ aᵀ)ᵀ.
         std::vector<double> aM(static_cast<std::size_t>(n));
         cblas_dgemv(CblasColMajor, CblasTrans, n, n, 1.0, M.dados.data(), n, a.data(), 1, 0.0, aM.data(), 1);
 
         std::vector<double> Ma(static_cast<std::size_t>(n));
         cblas_dgemv(CblasColMajor, CblasNoTrans, n, n, 1.0, M.dados.data(), n, a.data(), 1, 0.0, Ma.data(), 1);
 
-        // MN.csv traz inteiros exatos: a tolerância cobre só o erro de ponto flutuante.
         const double tolerancia_MN = 1e-9;
-        // aM.csv tem 2 casas (erro até 0,005) e a.csv tem 5 (erro até 5e-6 por termo, somado ao
-        // longo da maior coluna de M).
         double maior_soma_coluna = 0.0;
         for (int col = 0; col < n; ++col) {
             double soma = 0.0;

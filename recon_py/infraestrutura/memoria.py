@@ -1,4 +1,3 @@
-"""Quanto de RAM o sistema operacional informa: livre agora e total da máquina."""
 from __future__ import annotations
 
 import psutil

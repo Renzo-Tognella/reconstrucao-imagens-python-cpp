@@ -1,7 +1,6 @@
 .venv/
 __pycache__/
 .pytest_cache/
-# Binários gerados por preparar_dados.py e saídas de experimento
 dados/
 build/
 resultados/

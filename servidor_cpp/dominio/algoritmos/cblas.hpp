@@ -1,5 +1,3 @@
-// Inclui a CBLAS do backend escolhido no CMake. O domínio usa só as contas; ajustar threads
-// e descrever o backend é papel de infraestrutura/blas.hpp.
 #pragma once
 
 #if defined(BLAS_ACCELERATE)
@@ -23,4 +21,4 @@ inline int dimensao(std::size_t n) {
     return static_cast<int>(n);
 }
 
-}  // namespace blas
+}

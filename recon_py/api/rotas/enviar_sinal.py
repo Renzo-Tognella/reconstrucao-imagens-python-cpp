@@ -1,4 +1,3 @@
-"""POST /jobs: valida o pedido e o sinal e coloca a tarefa na fila. O cálculo roda no pool da fila."""
 from __future__ import annotations
 
 import re
@@ -70,7 +69,6 @@ def montar_pedido(parametros: Mapping[str, str], corpo: bytes | None, modelos: d
 
 
 async def _ler_corpo_limitado(request: Request, limite: int) -> bytes | None:
-    """Consome o corpo inteiro, mas não guarda além do limite: devolve None se ele for maior."""
     pedacos: list[bytes] = []
     total = 0
     async for pedaco in request.stream():

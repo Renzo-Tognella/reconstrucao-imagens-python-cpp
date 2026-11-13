@@ -1,4 +1,3 @@
-// GET /jobs/{id}: estado e tempos da tarefa.
 #include "http/erros.hpp"
 #include "http/rotas/rotas.hpp"
 
@@ -13,7 +12,7 @@ void consultar_pedido(const httplib::Request& req, httplib::Response& res, const
     responder_json(res, httplib::StatusCode::OK_200, *corpo);
 }
 
-}  // namespace
+}
 
 void registrar_consulta_de_pedido(httplib::Server& servidor, const Fila& fila) {
     servidor.Get("/jobs/:id", [&fila](const httplib::Request& req, httplib::Response& res) {

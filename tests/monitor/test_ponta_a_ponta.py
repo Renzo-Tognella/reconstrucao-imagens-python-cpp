@@ -1,4 +1,3 @@
-"""Servidor Python real, monitor real como processo e três clientes: a página tem de mostrar os três."""
 from __future__ import annotations
 
 import signal

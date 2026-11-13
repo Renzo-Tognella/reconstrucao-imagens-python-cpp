@@ -132,8 +132,6 @@ def test_modelo_desconhecido_e_erro(tmp_path):
         gerar(criar_dados(tmp_path / "dados"), modelos=["99x99"])
 
 
-# Hash de parametros + pedidos gerados antes de existir --ganho (semente 7, dois modelos sintéticos).
-# Se mudar, cargas já gravadas deixam de ser reproduzidas byte a byte.
 HASH_SORTEADO_ANTES_DO_GANHO = "6e731df3acfe62eba9be68e060ce58c0bc33b38238e4c250f9e5a82144d734f5"
 
 

@@ -1,4 +1,3 @@
-// O que uma reconstrução devolve, por que parou e o erro de conta que a interrompe.
 #pragma once
 
 #include <stdexcept>

@@ -271,7 +271,6 @@ function cartoes(e) {
   $("c-total-nota").textContent = k.em_andamento ? "em andamento: " + k.pendentes + " pedido(s) sem conclusão" : "";
 }
 
-// Gráfico de linhas em canvas: um eixo, grade discreta, último valor rotulado, cruz ao passar o mouse.
 const ponteiro = {};
 function grafico(id, series, unidade, minimoTeto, inteiro = false) {
   const canvas = $(id), dpr = window.devicePixelRatio || 1;
@@ -363,7 +362,6 @@ function el(tag, attrs, pai) {
   return n;
 }
 
-// Uma faixa por cliente; pedidos sobrepostos do mesmo cliente vão para sub-linhas.
 function linhaDoTempo(e) {
   const caixa = $("faixas");
   const pedidos = new Map((e.pedidos || []).map((p) => [p.job_id, p]));
@@ -395,7 +393,6 @@ function linhaDoTempo(e) {
   const pad = el("pattern", { id: "hachura", width: 6, height: 6, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" }, defs);
   el("rect", { width: 6, height: 6, fill: cor("--espera") }, pad);
   el("rect", { width: 2, height: 6, fill: cor("--espera-risco") }, pad);
-  // grade de tempo
   const passos = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600];
   const passo = passos.find((p) => dominio / p <= 8) || 1200;
   for (let t = 0; t <= dominio; t += passo) {

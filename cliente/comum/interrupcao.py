@@ -1,4 +1,3 @@
-"""SIGTERM tratado como Ctrl+C, para os blocos `finally` fecharem as conexões e gravarem o que já chegou."""
 from __future__ import annotations
 
 

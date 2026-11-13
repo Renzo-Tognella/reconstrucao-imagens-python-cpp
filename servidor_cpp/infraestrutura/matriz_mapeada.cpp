@@ -35,7 +35,6 @@ void ler_todas_as_paginas(const MatrizColunas& H) {
     const auto* bytes = reinterpret_cast<const unsigned char*>(H.dados);
     const auto pagina = static_cast<std::size_t>(sysconf(_SC_PAGESIZE));
     const std::size_t total = 8 * H.linhas * H.colunas;
-    // volatile: sem uso do valor, o compilador apagaria a leitura.
     volatile unsigned char lido = 0;
     for (std::size_t posicao = 0; posicao < total; posicao += pagina) {
         lido = bytes[posicao];
@@ -43,7 +42,7 @@ void ler_todas_as_paginas(const MatrizColunas& H) {
     (void)lido;
 }
 
-}  // namespace
+}
 
 MapaSomenteLeitura::MapaSomenteLeitura(const std::filesystem::path& caminho, std::size_t bytes_esperados)
     : bytes_(bytes_esperados) {

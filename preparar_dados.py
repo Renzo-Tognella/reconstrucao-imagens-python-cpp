@@ -30,7 +30,6 @@ MODELOS = {
     },
     "60x60": {
         "linhas": 50816, "colunas": 3600, "S": 794, "N": 64, "largura": 60, "altura": 60,
-        # 152 MB, fora do repositório: baixar de https://nuvem.utfpr.edu.br/index.php/s/GcirTvh7gBDsne6/download
         "matriz": DADOS_60 / "H-1.csv.zip",
         "sinais": {
             "g1": (DADOS_60 / "G-1.csv", DADOS_60 / "F-1.png"),
@@ -45,7 +44,6 @@ def _abrir_csv(caminho: Path) -> BinaryIO:
     if caminho.suffix != ".zip":
         return caminho.open("rb")
     arquivo = zipfile.ZipFile(caminho)
-    # O zip do modelo 60x60 foi criado no macOS e traz também metadados em __MACOSX/.
     nomes = [nome for nome in arquivo.namelist() if not nome.startswith("__MACOSX/")]
     if len(nomes) != 1:
         raise ValueError(f"{caminho}: esperado um CSV, encontrados {nomes}")
@@ -53,11 +51,6 @@ def _abrir_csv(caminho: Path) -> BinaryIO:
 
 
 def converter_matriz(origem: Path, destino: Path, linhas: int, colunas: int) -> None:
-    """Grava a matriz por colunas lendo uma linha do CSV por vez.
-
-    A matriz 60x60 ocupa 1,4 GiB: carregá-la inteira na RAM empurraria uma máquina de 8 GB para o swap.
-    As páginas do mapeamento são de arquivo, e o sistema pode devolvê-las ao disco sem usar swap.
-    """
     temporario = destino.with_suffix(".parcial")
     try:
         matriz = np.memmap(temporario, dtype="<f8", mode="w+", shape=(linhas, colunas), order="F")

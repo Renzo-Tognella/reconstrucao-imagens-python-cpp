@@ -1,4 +1,3 @@
-"""Leitura incremental de events.jsonl, como `tail -f`."""
 from __future__ import annotations
 
 import json
@@ -7,8 +6,6 @@ from pathlib import Path
 
 
 class LeitorEventos:
-    """Guarda a posição já lida. Uma linha sem `\\n` no fim ainda está sendo escrita: fica para a próxima leitura."""
-
     def __init__(self, caminho: Path) -> None:
         self.caminho = caminho
         self.linhas_invalidas = 0
@@ -22,7 +19,6 @@ class LeitorEventos:
         except FileNotFoundError:
             return []
         if info.st_ino != self._inode or info.st_size < self._posicao:
-            # Arquivo novo ou truncado: o que foi lido antes não vale mais.
             self._inode, self._posicao, self._resto = info.st_ino, 0, b""
         if info.st_size == self._posicao:
             return []

@@ -1,4 +1,3 @@
-"""Etapa 2 do enunciado: produtos de matriz e vetor pela BLAS, conferidos com os gabaritos."""
 from __future__ import annotations
 
 import io
@@ -47,12 +46,10 @@ def produto_mn(M: np.ndarray, N: np.ndarray) -> np.ndarray:
 
 
 def produto_am(a: np.ndarray, M: np.ndarray) -> np.ndarray:
-    """Vetor linha `a` vezes `M`, que equivale a Mᵀa."""
     _exigir_compativeis(a.size, M.shape[0])
     return dgemv(1.0, M, a, trans=1)
 
 
 def produto_ma(M: np.ndarray, a: np.ndarray) -> np.ndarray:
-    """`M` vezes `a` tomado como coluna (M·aᵀ); o enunciado não traz gabarito para esta operação."""
     _exigir_compativeis(M.shape[1], a.size)
     return dgemv(1.0, M, a)

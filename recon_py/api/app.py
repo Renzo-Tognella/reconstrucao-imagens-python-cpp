@@ -1,4 +1,3 @@
-"""Monta a aplicação HTTP: liga a fila ao ciclo de vida do servidor, os tratadores de erro e as rotas."""
 from __future__ import annotations
 
 from contextlib import asynccontextmanager

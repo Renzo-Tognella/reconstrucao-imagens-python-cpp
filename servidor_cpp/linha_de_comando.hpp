@@ -1,4 +1,3 @@
-// Opções de linha de comando do servidor_cpp.
 #pragma once
 
 #include <cstdint>
@@ -19,5 +18,4 @@ struct Opcoes {
     std::vector<std::string> aquecer;
 };
 
-// Lança std::invalid_argument com a mensagem para o usuário.
 Opcoes ler_opcoes(int argc, char** argv);

@@ -1,4 +1,3 @@
-"""Acha o processo servidor pela linha de comando. No macOS, `net_connections` exige root, por isso não é usado."""
 from __future__ import annotations
 
 import os
@@ -23,10 +22,6 @@ def _usa_a_porta(cmdline: list[str] | None, porta: int) -> bool:
 
 
 def escolher_pid(candidatos: list[dict], porta: int, excluir: set[int]) -> int | None:
-    """Entre processos `{pid, ppid, cmdline}`, o que roda com `--porta <porta>`.
-
-    Um lançador (`uv run ...`) repete a linha do filho: fica o ancestral, porque a medição soma os filhos.
-    """
     com_porta = [c for c in candidatos if c["pid"] not in excluir and _usa_a_porta(c["cmdline"], porta)]
     pids = {c["pid"] for c in com_porta}
     raizes = [c for c in com_porta if c["ppid"] not in pids]
@@ -69,7 +64,6 @@ def descobrir_pid(porta: int) -> int | None:
 
 
 def saida_do_processo(pid: int) -> Path | None:
-    """A pasta `--saida` com que o servidor foi iniciado, resolvida pelo diretório de trabalho dele."""
     try:
         processo = psutil.Process(pid)
         familia = [processo, *processo.children(recursive=True)]

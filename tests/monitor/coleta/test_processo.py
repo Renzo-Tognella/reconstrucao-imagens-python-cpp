@@ -31,7 +31,6 @@ def test_nao_confunde_porta_com_prefixo_comum():
 
 
 def test_prefere_o_ancestral_quando_um_lancador_tem_a_mesma_linha():
-    # `uv run python -m recon_py.servidor ...` cria dois processos com a mesma porta; o pai soma o filho.
     candidatos = [_proc(21, 20, SERVIDOR_PY), _proc(20, 5, ["uv", "run", *SERVIDOR_PY])]
     assert escolher_pid(candidatos, 8000, excluir=set()) == 20
 

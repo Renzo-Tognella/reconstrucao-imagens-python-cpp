@@ -1,4 +1,3 @@
-"""O que um algoritmo devolve, quando ele para e quando o cálculo não vale."""
 from __future__ import annotations
 
 import math
@@ -15,7 +14,7 @@ ZERO_RESIDUAL = "zero_residual"
 
 
 class FalhaNumerica(Exception):
-    """O cálculo produziu divisão por zero ou valor não finito: não existe imagem válida."""
+    pass
 
 
 @dataclass(frozen=True)

@@ -1,4 +1,3 @@
-"""GET /metrics (contadores da fila) e GET /info (como o servidor foi configurado)."""
 from __future__ import annotations
 
 import platform

@@ -35,7 +35,6 @@ def test_imprime_uma_linha_json_por_repeticao():
 
 
 def test_rss_e_o_pico_do_processo_em_mib_e_inclui_h_mapeada():
-    # Mesma convenção do protótipo C++ (ru_maxrss), para os números serem comparáveis.
     execucao = rodar("--sinal", "dados/sinais/30x30/g1.f64", "--algoritmo", "cgnr", "--blas-threads", "1")
     assert execucao.returncode == 0, execucao.stderr
     assert json.loads(execucao.stdout)["rss_mb"] > 150

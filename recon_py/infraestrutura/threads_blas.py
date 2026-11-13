@@ -1,4 +1,3 @@
-"""Só biblioteca padrão: precisa rodar antes de qualquer importação de NumPy ou SciPy."""
 from __future__ import annotations
 
 import os

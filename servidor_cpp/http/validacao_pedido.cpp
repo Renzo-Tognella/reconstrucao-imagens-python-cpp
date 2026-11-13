@@ -39,7 +39,6 @@ std::optional<RecusaPedido> decodificar_sinal(const std::string& corpo, const Mo
     if (corpo.size() != 8 * modelo.linhas()) {
         return RecusaPedido{"invalid_length", "corpo precisa ter " + std::to_string(8 * modelo.linhas()) + " bytes"};
     }
-    // O string do corpo não garante alinhamento de double: copia antes de interpretar.
     sinal.resize(modelo.linhas());
     std::memcpy(sinal.data(), corpo.data(), corpo.size());
     for (const double amostra : sinal) {
@@ -50,7 +49,7 @@ std::optional<RecusaPedido> decodificar_sinal(const std::string& corpo, const Mo
     return std::nullopt;
 }
 
-}  // namespace
+}
 
 std::variant<PedidoTarefa, RecusaPedido> ler_pedido(const ParametrosPedido& parametros, const std::string& corpo,
                                                     const CatalogoModelos& catalogo) {

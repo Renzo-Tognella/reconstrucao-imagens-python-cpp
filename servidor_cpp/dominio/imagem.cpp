@@ -14,7 +14,7 @@ double maior_modulo(const std::vector<double>& f) {
     return maximo;
 }
 
-}  // namespace
+}
 
 std::string imagem_pgm(const std::vector<double>& f, std::size_t largura, std::size_t altura) {
     if (f.size() != largura * altura) {

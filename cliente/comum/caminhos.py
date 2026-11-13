@@ -1,4 +1,3 @@
-"""Onde ficam, por padrão, os dados e as saídas da demonstração."""
 from __future__ import annotations
 
 from pathlib import Path

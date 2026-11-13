@@ -1,4 +1,3 @@
-"""GET /jobs/{job_id}: estado atual e medidas de uma tarefa."""
 from __future__ import annotations
 
 from fastapi import APIRouter
