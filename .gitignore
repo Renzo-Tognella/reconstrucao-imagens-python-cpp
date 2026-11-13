@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+.pytest_cache/
+# Binários gerados por preparar_dados.py e saídas de experimento
+dados/
+build/
+resultados/
+build-accelerate/
+dados-fornecidos/60x60/H-1.csv.zip

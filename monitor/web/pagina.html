@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monitor de reconstrução</title>
+<style>
+:root {
+  color-scheme: light;
+  --plano: #f9f9f7; --superficie: #fcfcfb; --borda: rgba(11,11,11,0.12);
+  --tinta: #0b0b0b; --tinta-2: #52514e; --tinta-3: #6f6e69;
+  --grade: #e1e0d9; --eixo: #c3c2b7;
+  --serie-1: #2a78d6; --serie-2: #eb6834;
+  --espera: #b9b7ae; --espera-risco: #8f8d85;
+  --rodando: #2a78d6; --ok: #0ca30c; --ok-texto: #006300; --falha: #d03b3b; --aviso: #b07800;
+  --botao: #0b0b0b; --botao-texto: #fcfcfb;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --plano: #0d0d0d; --superficie: #1a1a19; --borda: rgba(255,255,255,0.12);
+    --tinta: #f0efec; --tinta-2: #c3c2b7; --tinta-3: #9c9a92;
+    --grade: #2c2c2a; --eixo: #383835;
+    --serie-1: #3987e5; --serie-2: #d95926;
+    --espera: #55534e; --espera-risco: #7a7870;
+    --rodando: #3987e5; --ok: #0ca30c; --ok-texto: #0ca30c; --falha: #e66767; --aviso: #fab219;
+    --botao: #f0efec; --botao-texto: #0d0d0d;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --plano: #0d0d0d; --superficie: #1a1a19; --borda: rgba(255,255,255,0.12);
+  --tinta: #f0efec; --tinta-2: #c3c2b7; --tinta-3: #9c9a92;
+  --grade: #2c2c2a; --eixo: #383835;
+  --serie-1: #3987e5; --serie-2: #d95926;
+  --espera: #55534e; --espera-risco: #7a7870;
+  --rodando: #3987e5; --ok: #0ca30c; --ok-texto: #0ca30c; --falha: #e66767; --aviso: #fab219;
+  --botao: #f0efec; --botao-texto: #0d0d0d;
+}
+* { box-sizing: border-box; }
+html { font-size: 18px; }
+body {
+  margin: 0; background: var(--plano); color: var(--tinta);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.35;
+}
+main { max-width: 1680px; margin: 0 auto; padding: 16px 20px 32px; display: grid; gap: 16px; }
+.painel { background: var(--superficie); border: 1px solid var(--borda); border-radius: 12px; padding: 14px 18px; }
+h2 { font-size: 1rem; margin: 0 0 8px; color: var(--tinta-2); font-weight: 600; }
+
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
+.titulo { font-size: 1.9rem; font-weight: 700; margin: 0; }
+.impl { display: inline-block; padding: 2px 14px; border-radius: 8px; background: var(--tinta); color: var(--superficie); }
+.detalhes { display: flex; flex-wrap: wrap; gap: 4px 20px; color: var(--tinta-2); font-size: 1rem; }
+.detalhes b { color: var(--tinta); }
+.conexao { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+.ponto { width: 14px; height: 14px; border-radius: 50%; background: var(--tinta-3); }
+.conexao[data-estado="conectado"] .ponto { background: var(--ok); }
+.conexao[data-estado="sem_resposta"] .ponto, .conexao[data-estado="monitor"] .ponto { background: var(--falha); }
+.acoes { margin-left: auto; display: flex; gap: 10px; }
+button {
+  font: inherit; font-size: 1rem; font-weight: 600; border-radius: 8px; padding: 8px 16px; cursor: pointer;
+  border: 1px solid var(--borda); background: var(--superficie); color: var(--tinta);
+}
+button.primario { background: var(--botao); color: var(--botao-texto); border-color: var(--botao); }
+button:active { transform: scale(0.97); }
+button:focus-visible { outline: 3px solid var(--serie-1); outline-offset: 2px; }
+
+.cartoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+@media (min-width: 960px) { .cartoes { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1800px) { .cartoes { grid-template-columns: repeat(6, 1fr); } }
+.cartao { display: grid; gap: 4px; align-content: start; }
+.pares { display: flex; gap: 22px; }
+.pares > div { flex: 1 1 0; min-width: 0; }
+.valor { font-size: 2.7rem; font-weight: 700; line-height: 1.05; }
+.valor small { font-size: 1.1rem; font-weight: 600; color: var(--tinta-2); margin-left: 3px; }
+.rotulo { font-size: 0.95rem; color: var(--tinta-2); }
+.nota { font-size: 0.85rem; color: var(--tinta-3); }
+.valor.ok { color: var(--ok-texto); }
+.valor.falha { color: var(--falha); }
+
+.graficos { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.grafico canvas { width: 100%; height: 190px; display: block; }
+.legenda { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.9rem; color: var(--tinta-2); margin-bottom: 4px; }
+.legenda i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.legenda i.bloco { height: 14px; border-radius: 3px; }
+.legenda i.hachura { background: repeating-linear-gradient(45deg, var(--espera) 0 4px, var(--espera-risco) 4px 6px); }
+
+#linha-do-tempo svg { width: 100%; display: block; }
+#linha-do-tempo text { fill: var(--tinta-2); font-size: 15px; }
+#linha-do-tempo text.cliente { fill: var(--tinta); font-weight: 700; font-size: 17px; }
+.vazio { color: var(--tinta-3); padding: 18px 0; }
+
+.tabela { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 1rem; font-variant-numeric: tabular-nums; }
+th, td { padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--grade); white-space: nowrap; }
+th { color: var(--tinta-2); font-weight: 600; font-size: 0.9rem; }
+td.num, th.num { text-align: right; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.chip::before { content: ""; width: 12px; height: 12px; border-radius: 3px; background: var(--c, var(--tinta-3)); }
+.rodape { color: var(--tinta-3); font-size: 0.85rem; }
+@media (max-width: 640px) { html { font-size: 15px; } main { padding: 12px 16px; } .acoes { margin-left: 0; } }
+</style>
+</head>
+<body>
+<main>
+  <header class="painel">
+    <h1 class="titulo">Servidor <span class="impl" id="impl">?</span></h1>
+    <div class="detalhes">
+      <span>BLAS <b id="blas">–</b></span>
+      <span>W <b id="workers">–</b></span>
+      <span>threads BLAS <b id="blas-threads">–</b></span>
+      <span class="conexao" id="conexao" data-estado="iniciando"><span class="ponto"></span><span id="conexao-texto">iniciando</span></span>
+    </div>
+    <div class="acoes">
+      <button type="button" id="tema" title="Alternar tema claro/escuro">Tema</button>
+      <button type="button" class="primario" id="nova-rodada">Nova rodada</button>
+    </div>
+  </header>
+
+  <section class="cartoes" aria-label="Indicadores">
+    <div class="painel cartao">
+      <h2>Agora</h2>
+      <div class="pares">
+        <div><div class="valor" id="c-fila">–</div><div class="rotulo">na fila</div></div>
+        <div><div class="valor" id="c-rodando">–</div><div class="rotulo">reconstruindo</div></div>
+      </div>
+      <div class="nota" id="c-memoria-espera"></div>
+    </div>
+    <div class="painel cartao">
+      <h2>Pedidos da rodada</h2>
+      <div class="pares">
+        <div><div class="valor ok" id="c-concluidas">–</div><div class="rotulo">concluídas</div></div>
+        <div><div class="valor" id="c-recusadas">–</div><div class="rotulo">recusadas</div></div>
+        <div><div class="valor" id="c-falhas">–</div><div class="rotulo">falhas</div></div>
+      </div>
+    </div>
+    <div class="painel cartao">
+      <h2>Processo servidor</h2>
+      <div class="pares">
+        <div><div class="valor" id="c-cpu">–</div><div class="rotulo">CPU (100% = 1 núcleo)</div></div>
+        <div><div class="valor" id="c-mem">–</div><div class="rotulo">memória (RSS)</div></div>
+      </div>
+      <div class="nota" id="c-sistema">sistema: –</div>
+    </div>
+    <div class="painel cartao">
+      <h2>Desempenho</h2>
+      <div class="pares">
+        <div><div class="valor" id="c-vazao">–</div><div class="rotulo">imagens por segundo</div></div>
+        <div><div class="valor" id="c-recon">–</div><div class="rotulo">reconstrução média</div></div>
+      </div>
+      <div class="nota" id="c-espera">espera média na fila: –</div>
+    </div>
+    <div class="painel cartao">
+      <h2>Tamanho da fila</h2>
+      <div class="pares">
+        <div><div class="valor" id="c-fila-media">–</div><div class="rotulo">média ponderada no tempo</div></div>
+        <div><div class="valor" id="c-fila-moda">–</div><div class="rotulo">moda (amostras de 1 s)</div></div>
+      </div>
+      <div class="nota" id="c-fila-amostras"></div>
+    </div>
+    <div class="painel cartao">
+      <h2>Tempo total</h2>
+      <div class="valor" id="c-total">–</div>
+      <div class="rotulo">da primeira chegada à última conclusão</div>
+      <div class="nota" id="c-total-nota"></div>
+    </div>
+  </section>
+
+  <section class="graficos" aria-label="Séries ao vivo">
+    <div class="painel grafico">
+      <h2>CPU do servidor (% de um núcleo)</h2>
+      <canvas id="g-cpu" role="img" aria-label="CPU do servidor ao longo do tempo"></canvas>
+    </div>
+    <div class="painel grafico">
+      <h2>Memória do servidor (MB)</h2>
+      <canvas id="g-mem" role="img" aria-label="Memória do servidor ao longo do tempo"></canvas>
+    </div>
+    <div class="painel grafico">
+      <h2>Fila e execução</h2>
+      <div class="legenda"><span><i style="background:var(--serie-1)"></i>na fila</span><span><i style="background:var(--serie-2)"></i>reconstruindo</span></div>
+      <canvas id="g-fila" role="img" aria-label="Tamanho da fila e tarefas em execução ao longo do tempo"></canvas>
+    </div>
+  </section>
+
+  <section class="painel" id="linha-do-tempo">
+    <h2>Linha do tempo por cliente</h2>
+    <div class="legenda">
+      <span><i class="bloco hachura"></i>espera na fila</span>
+      <span><i class="bloco" style="background:var(--rodando)"></i>reconstruindo</span>
+      <span><i class="bloco" style="background:var(--ok)"></i>concluída</span>
+      <span><i class="bloco" style="background:var(--falha)"></i>falhou</span>
+      <span><b style="color:var(--falha)">×</b> recusada (fila cheia)</span>
+    </div>
+    <div id="faixas"><div class="vazio">Aguardando pedidos…</div></div>
+  </section>
+
+  <section class="painel tabela">
+    <h2>Últimos pedidos</h2>
+    <table>
+      <thead><tr>
+        <th>Pedido</th><th>Cliente</th><th>Sinal</th><th>Modelo</th><th>Ganho</th><th>Algoritmo</th><th>Estado</th>
+        <th class="num">Espera na fila</th><th class="num">Reconstrução</th><th class="num">Total</th><th class="num">Iterações</th>
+      </tr></thead>
+      <tbody id="tabela"><tr><td colspan="11" class="vazio">Aguardando pedidos…</td></tr></tbody>
+    </table>
+  </section>
+
+  <div class="rodape" id="rodape"></div>
+</main>
+<script>
+"use strict";
+const ESTADOS = {
+  fila: ["na fila", "--espera-risco"], reconstruindo: ["reconstruindo", "--rodando"],
+  concluido: ["concluída", "--ok"], falhou: ["falhou", "--falha"], recusado: ["recusada", "--falha"],
+};
+const $ = (id) => document.getElementById(id);
+const cor = (nome) => getComputedStyle(document.documentElement).getPropertyValue(nome).trim();
+const num = (v, casas = 1) => v == null ? "–" : v.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
+const seg = (v, casas = 2) => v == null ? "–" : num(v, casas) + " s";
+const esc = (t) => String(t ?? "–").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const NS = "http://www.w3.org/2000/svg";
+let ultimo = null;
+
+function texto(id, valor, unidade) {
+  const el = $(id);
+  el.textContent = valor;
+  if (unidade) { const s = document.createElement("small"); s.textContent = unidade; el.appendChild(s); }
+}
+
+function duracao(s) {
+  if (s == null) return "–";
+  if (s < 60) return num(s, 1) + " s";
+  const m = Math.floor(s / 60);
+  return m + " min " + num(s - 60 * m, 0).padStart(2, "0") + " s";
+}
+
+function cabecalho(e) {
+  const info = e.info || {};
+  const nomes = { python: "Python", cpp: "C++" };
+  $("impl").textContent = nomes[info.implementation] || "?";
+  $("blas").textContent = info.blas || "–";
+  $("workers").textContent = info.workers ?? "–";
+  $("blas-threads").textContent = info.blas_threads ?? "–";
+  const c = e.conexao || {};
+  $("conexao").dataset.estado = c.estado;
+  $("conexao-texto").textContent = c.estado === "conectado" ? "conectado a " + c.servidor
+    : c.estado === "sem_resposta" ? "sem resposta de " + c.servidor : c.estado;
+  $("conexao").title = c.erro || "";
+}
+
+function cartoes(e) {
+  const k = e.cartoes || {}, m = e.metrics, r = e.recursos || {};
+  texto("c-fila", m ? m.queue_depth : "–");
+  texto("c-rodando", m ? m.running : "–", e.info ? "/" + e.info.workers : "");
+  $("c-memoria-espera").textContent = m && m.waiting_memory ? "cabeça da fila aguardando memória" : "";
+  texto("c-concluidas", k.concluidas ?? "–");
+  texto("c-recusadas", k.recusadas ?? "–");
+  texto("c-falhas", k.falhas ?? "–");
+  $("c-falhas").classList.toggle("falha", (k.falhas || 0) > 0);
+  texto("c-cpu", r.cpu_servidor_pct == null ? "–" : num(r.cpu_servidor_pct, 0), "%");
+  texto("c-mem", r.mem_servidor_mb == null ? "–" : num(r.mem_servidor_mb, 0), "MB");
+  $("c-sistema").textContent = r.cpu_sistema_pct == null ? "sistema: –"
+    : `sistema: CPU ${num(r.cpu_sistema_pct, 0)}% (média dos núcleos) · memória ${num(r.mem_sistema_usada_mb / 1024, 1)} de ${num(r.mem_sistema_total_mb / 1024, 1)} GB (${num(r.mem_sistema_pct, 0)}%)`;
+  texto("c-vazao", num(k.imagens_por_s, 2));
+  texto("c-recon", k.reconstrucao_media_s == null ? "–" : num(k.reconstrucao_media_s, 2), "s");
+  $("c-espera").textContent = "espera média na fila: " + seg(k.espera_media_s);
+  texto("c-fila-media", num(k.fila_media, 2));
+  texto("c-fila-moda", k.fila_moda && k.fila_moda.length ? k.fila_moda.join(", ") : "–");
+  $("c-fila-amostras").textContent = k.fila_amostras ? k.fila_amostras + " amostras na janela" : "";
+  texto("c-total", duracao(k.tempo_total_s));
+  $("c-total-nota").textContent = k.em_andamento ? "em andamento: " + k.pendentes + " pedido(s) sem conclusão" : "";
+}
+
+// Gráfico de linhas em canvas: um eixo, grade discreta, último valor rotulado, cruz ao passar o mouse.
+const ponteiro = {};
+function grafico(id, series, unidade, minimoTeto, inteiro = false) {
+  const canvas = $(id), dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (canvas.width !== Math.round(w * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  const agora = ultimo ? ultimo.agora : Date.now() / 1000;
+  const pontos = series.flatMap((s) => s.pontos);
+  const janela = Math.max(30, pontos.length ? agora - Math.min(...pontos.map((p) => p.t)) : 30);
+  let teto = Math.max(minimoTeto, ...pontos.map((p) => p.v));
+  const passo = Math.pow(10, Math.floor(Math.log10(teto || 1)));
+  teto = inteiro ? Math.max(4, Math.ceil(teto / 4) * 4) : Math.ceil((teto * 1.1) / passo) * passo || 1;
+  const esq = 54, dir = 64, cima = 8, baixo = 24;
+  const x = (t) => esq + (w - esq - dir) * (1 - (agora - t) / janela);
+  const y = (v) => cima + (h - cima - baixo) * (1 - v / teto);
+  ctx.font = "13px system-ui, sans-serif";
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const v = (teto * i) / 4, yy = Math.round(y(v)) + 0.5;
+    ctx.strokeStyle = i === 0 ? cor("--eixo") : cor("--grade");
+    ctx.beginPath(); ctx.moveTo(esq, yy); ctx.lineTo(w - dir, yy); ctx.stroke();
+    ctx.fillStyle = cor("--tinta-3"); ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    ctx.fillText(num(v, !inteiro && teto < 10 ? 1 : 0), esq - 8, yy);
+  }
+  ctx.textAlign = "center"; ctx.textBaseline = "top";
+  for (const frac of [0, 0.5, 1]) {
+    const seg = Math.round(janela * (1 - frac));
+    ctx.fillText(seg === 0 ? "agora" : "−" + duracao(seg).replace(",0 s", " s"), esq + (w - esq - dir) * frac, h - baixo + 6);
+  }
+  for (const s of series) {
+    ctx.strokeStyle = s.cor; ctx.lineWidth = 2; ctx.lineJoin = "round";
+    ctx.beginPath();
+    let aberto = false;
+    for (const p of s.pontos) {
+      if (p.v == null) { aberto = false; continue; }
+      if (!aberto) { ctx.moveTo(x(p.t), y(p.v)); aberto = true; } else ctx.lineTo(x(p.t), y(p.v));
+    }
+    ctx.stroke();
+    const fim = [...s.pontos].reverse().find((p) => p.v != null);
+    if (fim) {
+      ctx.fillStyle = s.cor; ctx.beginPath(); ctx.arc(x(fim.t), y(fim.v), 4, 0, 2 * Math.PI); ctx.fill();
+      ctx.fillStyle = cor("--tinta"); ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      ctx.font = "600 14px system-ui, sans-serif";
+      ctx.fillText(num(fim.v, s.casas ?? 0) + unidade, x(fim.t) + 8, y(fim.v));
+      ctx.font = "13px system-ui, sans-serif";
+    }
+  }
+  const px = ponteiro[id];
+  if (px != null && px >= esq && px <= w - dir) {
+    const t = agora - (1 - (px - esq) / (w - esq - dir)) * janela;
+    ctx.strokeStyle = cor("--tinta-3"); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(px + 0.5, cima); ctx.lineTo(px + 0.5, h - baixo); ctx.stroke();
+    const linhas = series.map((s) => {
+      const p = s.pontos.reduce((a, b) => Math.abs(b.t - t) < Math.abs(a.t - t) ? b : a, s.pontos[0] || { v: null });
+      return (s.nome ? s.nome + ": " : "") + (p.v == null ? "–" : num(p.v, s.casas ?? 0) + unidade);
+    });
+    ctx.font = "600 13px system-ui, sans-serif";
+    const larg = Math.max(...linhas.map((l) => ctx.measureText(l).width)) + 16;
+    const bx = px + larg + 12 > w ? px - larg - 8 : px + 8;
+    ctx.fillStyle = cor("--superficie"); ctx.strokeStyle = cor("--eixo");
+    ctx.fillRect(bx, cima, larg, 8 + 18 * linhas.length); ctx.strokeRect(bx + 0.5, cima + 0.5, larg, 8 + 18 * linhas.length);
+    ctx.fillStyle = cor("--tinta"); ctx.textAlign = "left"; ctx.textBaseline = "top";
+    linhas.forEach((l, i) => ctx.fillText(l, bx + 8, cima + 6 + 18 * i));
+  }
+}
+for (const id of ["g-cpu", "g-mem", "g-fila"]) {
+  $(id).addEventListener("mousemove", (ev) => { ponteiro[id] = ev.offsetX; desenharGraficos(); });
+  $(id).addEventListener("mouseleave", () => { ponteiro[id] = null; desenharGraficos(); });
+}
+
+function desenharGraficos() {
+  if (!ultimo) return;
+  const s = ultimo.series || [];
+  const col = (campo) => s.map((a) => ({ t: a.t, v: a[campo] }));
+  grafico("g-cpu", [{ pontos: col("cpu_servidor_pct"), cor: cor("--serie-1") }], "%", 100);
+  grafico("g-mem", [{ pontos: col("mem_servidor_mb"), cor: cor("--serie-1") }], " MB", 100);
+  grafico("g-fila", [
+    { nome: "na fila", pontos: col("queue_depth"), cor: cor("--serie-1") },
+    { nome: "reconstruindo", pontos: col("running"), cor: cor("--serie-2") },
+  ], "", 4, true);
+}
+
+function el(tag, attrs, pai) {
+  const n = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+  if (pai) pai.appendChild(n);
+  return n;
+}
+
+// Uma faixa por cliente; pedidos sobrepostos do mesmo cliente vão para sub-linhas.
+function linhaDoTempo(e) {
+  const caixa = $("faixas");
+  const pedidos = new Map((e.pedidos || []).map((p) => [p.job_id, p]));
+  if (!e.faixas || !e.faixas.length) { caixa.innerHTML = '<div class="vazio">Aguardando pedidos…</div>'; return; }
+  const largura = Math.max(caixa.clientWidth, 320);
+  const agora = e.agora_rel || 0;
+  const fimDe = (p) => p.t_fim ?? agora;
+  const pendente = (e.cartoes || {}).em_andamento;
+  const dominio = Math.max(10, pendente ? agora : 0, ...[...pedidos.values()].map(fimDe)) * 1.02;
+  const esq = 150, dir = 16, alturaBarra = 22, vao = 4, folgaFaixa = 12, topo = 6;
+  const alturaFaixa = (f) => Math.max(f.n * (alturaBarra + vao), 46) + folgaFaixa;
+  const x = (t) => esq + (largura - esq - dir) * (t / dominio);
+  const faixas = e.faixas.map((f) => {
+    const linhas = [];
+    const itens = f.job_ids.map((id) => pedidos.get(id)).sort((a, b) => a.t_recebido - b.t_recebido);
+    for (const p of itens) {
+      if (p.estado === "recusado") { p._linha = 0; if (!linhas.length) linhas.push(0); continue; }
+      let i = linhas.findIndex((fim) => fim <= p.t_recebido);
+      if (i < 0) { i = linhas.length; linhas.push(0); }
+      linhas[i] = fimDe(p);
+      p._linha = i;
+    }
+    return { ...f, itens, n: Math.max(1, linhas.length) };
+  });
+  const alturaTotal = topo + faixas.reduce((s, f) => s + alturaFaixa(f), 0) + 26;
+  const svg = el("svg", { viewBox: `0 0 ${largura} ${alturaTotal}`, height: alturaTotal, role: "img",
+    "aria-label": "Linha do tempo dos pedidos por cliente" });
+  const defs = el("defs", {}, svg);
+  const pad = el("pattern", { id: "hachura", width: 6, height: 6, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" }, defs);
+  el("rect", { width: 6, height: 6, fill: cor("--espera") }, pad);
+  el("rect", { width: 2, height: 6, fill: cor("--espera-risco") }, pad);
+  // grade de tempo
+  const passos = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600];
+  const passo = passos.find((p) => dominio / p <= 8) || 1200;
+  for (let t = 0; t <= dominio; t += passo) {
+    el("line", { x1: x(t), x2: x(t), y1: topo, y2: alturaTotal - 22, stroke: cor("--grade") }, svg);
+    const tx = el("text", { x: x(t), y: alturaTotal - 4, "text-anchor": "middle" }, svg);
+    tx.textContent = duracao(t).replace(",0 s", " s");
+  }
+  if (pendente) el("line", { x1: x(agora), x2: x(agora), y1: topo, y2: alturaTotal - 22, stroke: cor("--tinta-3"), "stroke-dasharray": "4 4" }, svg);
+  let y0 = topo;
+  for (const f of faixas) {
+    const rot = el("text", { x: 0, y: y0 + alturaBarra / 2 + 6, class: "cliente" }, svg);
+    rot.textContent = f.cliente ?? "recusados";
+    const sub = el("text", { x: 0, y: y0 + alturaBarra + 18 }, svg);
+    const feitos = f.itens.filter((p) => p.estado === "concluido").length;
+    sub.textContent = f.cliente == null ? `${f.itens.length} sem cliente` : `${feitos}/${f.itens.length} concluídas`;
+    for (const p of f.itens) {
+      const yy = y0 + p._linha * (alturaBarra + vao);
+      const g = el("g", {}, svg);
+      const titulo = el("title", {}, g);
+      titulo.textContent = `${p.job_id} · ${p.client_id ?? "?"} · ${p.signal_id ?? "?"} ${p.model ?? ""} ${p.algorithm ?? ""}\n`
+        + `${ESTADOS[p.estado][0]} · espera ${seg(p.espera_s)} · reconstrução ${seg(p.reconstrucao_s)} · total ${seg(p.total_s)}`;
+      if (p.estado === "recusado") {
+        const cx = x(p.t_recebido), cy = yy + alturaBarra / 2, r = 7;
+        el("path", { d: `M${cx - r} ${cy - r}L${cx + r} ${cy + r}M${cx + r} ${cy - r}L${cx - r} ${cy + r}`,
+          stroke: cor("--falha"), "stroke-width": 3, "stroke-linecap": "round" }, g);
+        continue;
+      }
+      const fimEspera = p.t_inicio ?? (p.t_fim ?? agora);
+      const larguraEspera = Math.max(0, x(fimEspera) - x(p.t_recebido));
+      if (larguraEspera > 0.5) el("rect", { x: x(p.t_recebido), y: yy, width: larguraEspera, height: alturaBarra, rx: 3, fill: "url(#hachura)" }, g);
+      if (p.t_inicio != null) {
+        const corEstado = cor(ESTADOS[p.estado][1]);
+        el("rect", { x: x(p.t_inicio), y: yy, width: Math.max(3, x(fimDe(p)) - x(p.t_inicio)), height: alturaBarra, rx: 3, fill: corEstado }, g);
+      } else if (p.estado === "falhou") {
+        el("rect", { x: x(fimDe(p)) - 2, y: yy, width: 4, height: alturaBarra, fill: cor("--falha") }, g);
+      }
+    }
+    y0 += alturaFaixa(f);
+  }
+  caixa.replaceChildren(svg);
+}
+
+function tabela(e) {
+  const pedidos = new Map((e.pedidos || []).map((p) => [p.job_id, p]));
+  const corpo = $("tabela");
+  if (!e.tabela || !e.tabela.length) { corpo.innerHTML = '<tr><td colspan="11" class="vazio">Aguardando pedidos…</td></tr>'; return; }
+  corpo.innerHTML = e.tabela.map((id) => {
+    const p = pedidos.get(id), [nome, variavel] = ESTADOS[p.estado];
+    const ganho = p.gain == null ? "–" : p.gain ? "sim" : "não";
+    const detalhe = p.erro ? ` (${esc(p.erro)})` : "";
+    return `<tr><td>${esc(p.job_id)}</td><td>${esc(p.client_id)}</td><td>${esc(p.signal_id)}</td><td>${esc(p.model)}</td><td>${ganho}</td>`
+      + `<td>${esc(p.algorithm && p.algorithm.toUpperCase())}</td>`
+      + `<td><span class="chip" style="--c:var(${variavel})">${nome}${detalhe}</span></td>`
+      + `<td class="num">${seg(p.espera_s, 3)}</td><td class="num">${seg(p.reconstrucao_s, 3)}</td>`
+      + `<td class="num">${seg(p.total_s, 3)}</td><td class="num">${p.iteracoes ?? "–"}</td></tr>`;
+  }).join("");
+}
+
+function rodape(e) {
+  const pr = e.processo || {};
+  const partes = [`PID do servidor: ${pr.pid ?? "não encontrado"}`, `saída: ${pr.saida ?? "desconhecida"}`, `rodada ${e.rodada ? e.rodada.numero : "–"}`];
+  if (pr.linhas_invalidas) partes.push(`${pr.linhas_invalidas} linha(s) inválida(s) em events.jsonl`);
+  $("rodape").textContent = partes.join(" · ");
+}
+
+function desenhar() {
+  if (!ultimo) return;
+  cabecalho(ultimo); cartoes(ultimo); desenharGraficos(); linhaDoTempo(ultimo); tabela(ultimo); rodape(ultimo);
+}
+
+async function consultar() {
+  try {
+    const r = await fetch("/api/estado", { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    ultimo = await r.json();
+    desenhar();
+  } catch (erro) {
+    $("conexao").dataset.estado = "monitor";
+    $("conexao-texto").textContent = "monitor sem resposta";
+  } finally {
+    setTimeout(consultar, 500);
+  }
+}
+
+$("nova-rodada").addEventListener("click", async () => {
+  await fetch("/api/nova-rodada", { method: "POST" });
+});
+
+const TEMAS = ["auto", "light", "dark"], NOMES_TEMA = { auto: "Tema: sistema", light: "Tema: claro", dark: "Tema: escuro" };
+function aplicarTema(tema) {
+  if (tema === "auto") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = tema;
+  $("tema").textContent = NOMES_TEMA[tema];
+  try { localStorage.setItem("monitor-tema", tema); } catch (_) {}
+  desenhar();
+}
+let temaAtual = "auto";
+try { temaAtual = localStorage.getItem("monitor-tema") || "auto"; } catch (_) {}
+aplicarTema(temaAtual);
+$("tema").addEventListener("click", () => { temaAtual = TEMAS[(TEMAS.indexOf(temaAtual) + 1) % 3]; aplicarTema(temaAtual); });
+window.addEventListener("resize", desenhar);
+consultar();
+</script>
+</body>
+</html>
