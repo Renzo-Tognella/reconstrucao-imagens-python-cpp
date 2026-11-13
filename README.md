@@ -12,6 +12,8 @@ Clientes enviam sinais de ultrassom `g` para um servidor, que reconstrói a imag
 | Monitor ao vivo | Python, FastAPI, psutil | `monitor/` |
 | Preparação dos dados | Python | `preparar_dados.py` |
 
+Cada parte tem o seu README com como subir, testar e avaliar: [servidor Python](recon_py/README.md), [servidor C++](servidor_cpp/README.md) e [cliente](cliente/README.md).
+
 ## Arquitetura
 
 - **Cliente-servidor centralizado.** Um servidor por vez atende vários clientes.
